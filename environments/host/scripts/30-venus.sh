@@ -41,12 +41,12 @@ cd virglrenderer
 git fetch --all --tags
 git checkout "${VIRGL_REF}"
 
-echo "==> Configuring virglrenderer (venus + drm native context)"
+echo "==> Configuring virglrenderer (venus + amdgpu drm native context)"
 rm -rf build
 meson setup build \
   --prefix="${PREFIX}" \
   -Dvenus=true \
-  -Ddrm-msm-experimental=false \
+  -Ddrm-renderers=amdgpu-experimental \
   -Dvideo=false
 
 echo "==> Building virglrenderer (-j${JOBS})"
