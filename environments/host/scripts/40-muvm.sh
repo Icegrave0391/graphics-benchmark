@@ -11,7 +11,8 @@
 # Requirements: Mesa >= 24.2 (24.04 amd64 = 25.2.8 OK) and kernel >= 6.13.
 # Linux guest only (drm native context is a Linux UAPI).
 #
-# Run after 00-base-kvm.sh, 05-qemu-10.2.sh, 30-venus.sh. Source build.
+# Run after 00-base-kvm.sh and 30-venus.sh (for the virglrenderer with amdgpu
+# drm native context). QEMU/05 is NOT needed for muvm. Source build.
 set -euo pipefail
 
 SRC_DIR="${SRC_DIR:-/usr/local/src}"

@@ -3,8 +3,18 @@
 Everything the **host** needs to run QEMU/KVM and bring up Linux/Windows guests
 for every scheme in the matrix. The host is Ubuntu 24.04 LTS on AMD.
 
-> Run order: start with `00-base-kvm.sh`, then `05-qemu-10.2.sh` (everyone uses
-> QEMU 10.2), then the script(s) for the schemes you intend to benchmark.
+> **Run order matters because QEMU links against virglrenderer at build time.**
+>
+> - **Venus path:** `00-base-kvm.sh` → `30-venus.sh` (builds venus virglrenderer)
+>   → `05-qemu-10.2.sh` (builds QEMU linked against it). Building QEMU before
+>   the venus virglrenderer would link it against the apt 1.0.0 (no venus).
+> - **VirGL / passthrough only:** `00-base-kvm.sh` → `05-qemu-10.2.sh` (uncomment
+>   the apt `libvirglrenderer-dev` line in `05` first).
+> - **muvm:** `00` → `30-venus.sh` → `40-muvm.sh` (libkrun links the same
+>   virglrenderer; QEMU is not used on this path).
+>
+> `05` prefers `/usr/local` via `PKG_CONFIG_PATH` and **warns** if it would link
+> a different virglrenderer, so you cannot silently end up with a non-venus QEMU.
 > Scripts are idempotent and safe to re-run.
 
 ## What can be installed from apt vs. what must be built
@@ -28,10 +38,10 @@ shared by all schemes.
 | Script | Purpose | Method |
 |---|---|---|
 | `scripts/00-base-kvm.sh`        | KVM, OVMF, swtpm, networking, Mesa/Vulkan       | apt |
-| `scripts/05-qemu-10.2.sh`       | build & install QEMU 10.2 to /usr/local         | **source build** |
+| `scripts/05-qemu-10.2.sh`       | build QEMU 10.2 (links the chosen virglrenderer) | **source build** |
 | `scripts/10-passthrough.sh`     | VFIO modules, IOMMU cmdline guidance, driverctl | apt + kernel cmdline |
 | `scripts/20-virgl.sh`           | virtio-gpu VirGL (OpenGL) runtime               | apt |
-| `scripts/30-venus.sh`           | build virglrenderer (`venus`); relink QEMU      | **source build** |
+| `scripts/30-venus.sh`           | build virglrenderer w/ venus (run before `05`)  | **source build** |
 | `scripts/40-muvm.sh`            | build libkrun + muvm (+ drm native context)     | **source build** |
 
 > These are scaffolding: they encode the correct package/build steps but should

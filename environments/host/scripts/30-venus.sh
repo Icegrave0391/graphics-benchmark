@@ -6,11 +6,15 @@
 # virglrenderer built with -Dvenus=true. QEMU is already covered by
 # 05-qemu-10.2.sh (Venus also needs QEMU >= 9.2, which 10.2 satisfies).
 #
-# This builds virglrenderer (venus + drm native context) and installs it to
-# /usr/local. After this you should RE-RUN 05-qemu-10.2.sh so QEMU links against
-# this venus-enabled virglrenderer.
+# This builds virglrenderer (venus + amdgpu drm native context) and installs it
+# to /usr/local.
 #
-# Run after 00-base-kvm.sh and 05-qemu-10.2.sh. Source build.
+# ORDER: run this BEFORE 05-qemu-10.2.sh. QEMU must be compiled AFTER this so it
+# links against this venus-enabled virglrenderer (05 prefers /usr/local via
+# PKG_CONFIG_PATH and verifies the link). Recommended sequence:
+#     00-base-kvm.sh  ->  30-venus.sh  ->  05-qemu-10.2.sh
+#
+# Run after 00-base-kvm.sh. Source build.
 set -euo pipefail
 
 VIRGL_REF="${VIRGL_REF:-1.1.0}"   # tag/branch of virglrenderer to build
@@ -60,8 +64,10 @@ cat <<EOF
 
 Done. virglrenderer with Venus is installed at ${PREFIX}.
 
-IMPORTANT: re-run 05-qemu-10.2.sh now so QEMU 10.2 links against THIS
-virglrenderer (the venus-enabled one), otherwise venus=on will not work.
+NEXT: run 05-qemu-10.2.sh now. It will build QEMU 10.2 linked against THIS
+venus-enabled virglrenderer (it prefers ${PREFIX} via PKG_CONFIG_PATH and warns
+if it would pick a different one). If you ran 05 earlier against the apt
+virglrenderer, just run it again now.
 
 Example guest launch fragment (Linux guest, Venus / Vulkan):
 

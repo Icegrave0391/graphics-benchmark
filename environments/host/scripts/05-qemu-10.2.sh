@@ -9,10 +9,15 @@
 # Run AFTER 00-base-kvm.sh. The stock qemu-system-x86 from base is kept only for
 # its OVMF/tooling dependencies; at runtime use /usr/local/bin/qemu-system-x86_64.
 #
-# NOTE on ordering vs. Venus: for the Venus path you want QEMU linked against the
-# venus-enabled virglrenderer. If you plan to run Venus, build virglrenderer
-# first (30-venus.sh builds it) OR re-run this script after it so QEMU links the
-# right library. For VirGL/passthrough this stock-virglrenderer build is fine.
+# ORDERING (important):
+#   * Venus path:           00 -> 30-venus.sh (builds virglrenderer w/ venus) -> 05 (this)
+#   * VirGL / passthrough:  00 -> 05, but first install the apt VirGL library
+#                           (uncomment libvirglrenderer-dev below).
+#
+# This script does NOT install the apt virglrenderer; it links QEMU against
+# whatever virglrenderer pkg-config finds, preferring /usr/local (the source
+# venus build). It verifies and warns if that is not the case — so you cannot
+# silently end up with a non-venus QEMU.
 set -euo pipefail
 
 QEMU_VERSION="10.2.0"
@@ -33,9 +38,34 @@ apt-get install -y --no-install-recommends \
   libglib2.0-dev libpixman-1-dev zlib1g-dev libfdt-dev \
   libslirp-dev libusb-1.0-0-dev libaio-dev \
   libepoxy-dev libgbm-dev libdrm-dev libegl-dev libgl-dev \
-  libvirglrenderer-dev \
   libseccomp-dev libcap-ng-dev \
   flex bison wget xz-utils
+#
+# NOTE: we intentionally do NOT install the apt 'libvirglrenderer-dev' (1.0.0,
+# no venus). For the Venus path you must build the venus-enabled virglrenderer
+# FIRST (30-venus.sh installs it to /usr/local), then run this script so QEMU
+# links against it. We force pkg-config to prefer /usr/local below.
+#
+# If you only need VirGL/passthrough and have NOT built the source virglrenderer,
+# uncomment the next line to use the apt VirGL-only library instead:
+#   apt-get install -y --no-install-recommends libvirglrenderer-dev
+
+echo "==> Selecting virglrenderer for QEMU to link against"
+export PKG_CONFIG_PATH="${PREFIX}/lib/x86_64-linux-gnu/pkgconfig:${PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
+if pkg-config --exists virglrenderer; then
+  VIRGL_PC_VER="$(pkg-config --modversion virglrenderer)"
+  VIRGL_PC_PREFIX="$(pkg-config --variable=prefix virglrenderer)"
+  echo "    Found virglrenderer ${VIRGL_PC_VER} at prefix ${VIRGL_PC_PREFIX}"
+  if [[ "${VIRGL_PC_PREFIX}" != "${PREFIX}" ]]; then
+    echo "    WARNING: QEMU will link against ${VIRGL_PC_PREFIX}, NOT your" >&2
+    echo "             source build in ${PREFIX}. Venus may be unavailable." >&2
+    echo "             Build 30-venus.sh first if you need Venus." >&2
+  fi
+else
+  echo "    ERROR: no virglrenderer found via pkg-config." >&2
+  echo "           Run 30-venus.sh first, or install libvirglrenderer-dev for VirGL-only." >&2
+  exit 1
+fi
 
 echo "==> Fetching QEMU ${QEMU_VERSION}"
 mkdir -p "${SRC_DIR}"
@@ -57,6 +87,14 @@ mkdir -p build && cd build
   --enable-virglrenderer \
   --enable-slirp \
   --enable-seccomp
+
+echo "==> Confirming QEMU picked up virglrenderer"
+if grep -Eiq 'virglrenderer.*(YES|true|enabled)' config-host.mak meson-logs/meson-log.txt 2>/dev/null; then
+  echo "    OK: virglrenderer enabled in QEMU build."
+else
+  echo "    WARNING: could not confirm virglrenderer in the QEMU config." >&2
+  echo "             Check build/meson-logs/meson-log.txt before relying on Venus." >&2
+fi
 
 echo "==> Building QEMU (-j${JOBS})"
 ninja -j"${JOBS}"
