@@ -35,8 +35,20 @@ echo "==> Installing build toolchain (Rust via rustup if missing, build deps)"
 apt-get update -y
 apt-get install -y --no-install-recommends \
   build-essential pkg-config git curl \
+  clang libclang-dev llvm-dev \
+  flex bison patchelf \
   libelf-dev libpixman-1-dev passt \
   python3 python3-pip
+
+# libkrun's Rust deps (clang-sys / bindgen) need libclang at build time.
+# Help them locate it even if llvm-config is not on PATH.
+if [[ -z "${LIBCLANG_PATH:-}" ]]; then
+  LC_DIR="$(dirname "$(find /usr/lib -name 'libclang.so*' 2>/dev/null | head -n1)")"
+  if [[ -n "${LC_DIR}" ]]; then
+    export LIBCLANG_PATH="${LC_DIR}"
+    echo "==> LIBCLANG_PATH=${LIBCLANG_PATH}"
+  fi
+fi
 
 if ! command -v cargo >/dev/null 2>&1; then
   echo "==> Installing Rust toolchain via rustup (stock rustc 1.75 may be too old)"
