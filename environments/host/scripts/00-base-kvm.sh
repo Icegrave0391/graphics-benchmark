@@ -7,6 +7,7 @@
 #
 # apt-only. Idempotent.
 set -euo pipefail
+. "$(dirname "$0")/lib/common.sh"
 
 if [[ "${EUID}" -ne 0 ]]; then
   echo "Re-running with sudo..." >&2
@@ -22,13 +23,10 @@ if [[ ! -e /dev/kvm ]]; then
   echo "WARNING: /dev/kvm not present. Is the kvm_amd module loaded?" >&2
 fi
 
-echo "==> apt update"
-apt-get update -y
-
 echo "==> Installing base KVM + QEMU tooling + firmware + networking"
 echo "    (stock qemu-system-x86 8.2.2 is installed for OVMF/tooling deps;"
 echo "     actual runtime QEMU is 10.2 built by 05-qemu-10.2.sh)"
-apt-get install -y --no-install-recommends \
+apt_need \
   qemu-system-x86 \
   qemu-utils \
   qemu-system-gui \
@@ -40,7 +38,7 @@ apt-get install -y --no-install-recommends \
   dnsmasq-base
 
 echo "==> Installing AMD Mesa / Vulkan userspace (RADV, radeonsi, tools)"
-apt-get install -y --no-install-recommends \
+apt_need \
   mesa-vulkan-drivers \
   mesa-utils \
   vulkan-tools \

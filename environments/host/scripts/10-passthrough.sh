@@ -7,14 +7,14 @@
 # helper 'driverctl', loads modules, and PRINTS the cmdline changes for you to
 # apply — it does NOT edit your bootloader automatically.
 set -euo pipefail
+. "$(dirname "$0")/lib/common.sh"
 
 if [[ "${EUID}" -ne 0 ]]; then
   exec sudo -E "$0" "$@"
 fi
 
 echo "==> Installing optional helper (driverctl) for vfio-pci binding"
-apt-get update -y
-apt-get install -y --no-install-recommends driverctl
+apt_need driverctl
 
 echo "==> Checking IOMMU status"
 if ! dmesg | grep -qiE 'AMD-Vi|IOMMU enabled'; then
