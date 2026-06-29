@@ -38,6 +38,7 @@ apt-get install -y --no-install-recommends \
   clang libclang-dev llvm-dev \
   flex bison patchelf \
   libelf-dev libpixman-1-dev passt \
+  libudev-dev libdrm-dev libepoxy-dev \
   python3 python3-pip
 
 # libkrun's Rust deps (clang-sys / bindgen) need libclang at build time.
