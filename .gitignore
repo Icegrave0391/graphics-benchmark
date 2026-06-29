@@ -1,0 +1,12 @@
+# macOS
+.DS_Store
+
+# Benchmark outputs
+/results/*
+!/results/.gitkeep
+captures/
+
+# Editor / OS
+*.swp
+.idea/
+.vscode/
