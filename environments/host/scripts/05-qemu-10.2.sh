@@ -19,7 +19,6 @@
 # venus build). It verifies and warns if that is not the case — so you cannot
 # silently end up with a non-venus QEMU.
 set -euo pipefail
-. "$(dirname "$0")/lib/common.sh"
 
 QEMU_VERSION="10.2.0"
 QEMU_TARBALL="qemu-${QEMU_VERSION}.tar.xz"
@@ -32,8 +31,9 @@ if [[ "${EUID}" -ne 0 ]]; then
   exec sudo -E "$0" "$@"
 fi
 
-echo "==> Ensuring QEMU build dependencies"
-apt_need \
+echo "==> Installing QEMU build dependencies"
+apt-get update -y
+apt-get install -y --no-install-recommends \
   build-essential ninja-build meson pkg-config python3 python3-venv \
   libglib2.0-dev libpixman-1-dev zlib1g-dev libfdt-dev \
   libslirp-dev libusb-1.0-0-dev libaio-dev \
@@ -48,7 +48,7 @@ apt_need \
 #
 # If you only need VirGL/passthrough and have NOT built the source virglrenderer,
 # uncomment the next line to use the apt VirGL-only library instead:
-#   apt_need libvirglrenderer-dev
+#   apt-get install -y --no-install-recommends libvirglrenderer-dev
 
 echo "==> Selecting virglrenderer for QEMU to link against"
 export PKG_CONFIG_PATH="${PREFIX}/lib/x86_64-linux-gnu/pkgconfig:${PREFIX}/lib/pkgconfig:${PKG_CONFIG_PATH:-}"

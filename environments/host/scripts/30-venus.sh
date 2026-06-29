@@ -16,7 +16,6 @@
 #
 # Run after 00-base-kvm.sh. Source build.
 set -euo pipefail
-. "$(dirname "$0")/lib/common.sh"
 
 VIRGL_REF="${VIRGL_REF:-1.1.0}"   # tag/branch of virglrenderer to build
 SRC_DIR="${SRC_DIR:-/usr/local/src}"
@@ -27,8 +26,9 @@ if [[ "${EUID}" -ne 0 ]]; then
   exec sudo -E "$0" "$@"
 fi
 
-echo "==> Ensuring virglrenderer build dependencies"
-apt_need \
+echo "==> Installing virglrenderer build dependencies"
+apt-get update -y
+apt-get install -y --no-install-recommends \
   build-essential meson ninja-build pkg-config git \
   libgbm-dev libdrm-dev libegl-dev libgl-dev libgles-dev \
   libepoxy-dev \
@@ -37,25 +37,21 @@ apt_need \
 
 echo "==> Fetching virglrenderer (${VIRGL_REF})"
 mkdir -p "${SRC_DIR}"
-git_sync https://gitlab.freedesktop.org/virgl/virglrenderer.git \
-  "${SRC_DIR}/virglrenderer" "${VIRGL_REF}"
+if [[ ! -d "${SRC_DIR}/virglrenderer/.git" ]]; then
+  git clone https://gitlab.freedesktop.org/virgl/virglrenderer.git \
+    "${SRC_DIR}/virglrenderer"
+fi
 cd "${SRC_DIR}/virglrenderer"
+git fetch --all --tags
+git checkout "${VIRGL_REF}"
 
 echo "==> Configuring virglrenderer (venus + amdgpu drm native context)"
-if [[ -f build/build.ninja ]]; then
-  echo "    build dir exists, reconfiguring in place"
-  meson setup --reconfigure build \
-    --prefix="${PREFIX}" \
-    -Dvenus=true \
-    -Ddrm-renderers=amdgpu-experimental \
-    -Dvideo=false
-else
-  meson setup build \
-    --prefix="${PREFIX}" \
-    -Dvenus=true \
-    -Ddrm-renderers=amdgpu-experimental \
-    -Dvideo=false
-fi
+rm -rf build
+meson setup build \
+  --prefix="${PREFIX}" \
+  -Dvenus=true \
+  -Ddrm-renderers=amdgpu-experimental \
+  -Dvideo=false
 
 echo "==> Building virglrenderer (-j${JOBS})"
 ninja -C build -j"${JOBS}"

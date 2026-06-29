@@ -11,17 +11,18 @@
 # Requirements: Mesa >= 24.2 (24.04 amd64 = 25.2.8 OK) and kernel >= 6.13.
 # Linux guest only (drm native context is a Linux UAPI).
 #
-# Run after 00-base-kvm.sh and 30-venus.sh (for the virglrenderer with amdgpu
-# drm native context). QEMU/05 is NOT needed for muvm. Source build.
+# Run after 00-base-kvm.sh and 30-venus.sh. QEMU/05 is NOT needed for muvm.
+#
+# Run as your normal user (NOT root): it builds as you and uses sudo only for
+# the install steps.
 set -euo pipefail
-. "$(dirname "$0")/lib/common.sh"
 
-SRC_DIR="${SRC_DIR:-/usr/local/src}"
+SRC_DIR="${SRC_DIR:-${HOME}/src/graphics-benchmark}"
 PREFIX="${PREFIX:-/usr/local}"
-JOBS="$(nproc)"
 
-if [[ "${EUID}" -ne 0 ]]; then
-  exec sudo -E "$0" "$@"
+if [[ "${EUID}" -eq 0 ]]; then
+  echo "ERROR: run this as your normal user, NOT root/sudo." >&2
+  exit 1
 fi
 
 echo "==> Checking kernel version (muvm needs >= 6.13)"
@@ -32,8 +33,9 @@ if (( KMAJ < 6 || (KMAJ == 6 && KMIN < 13) )); then
   echo "         Install an HWE / mainline kernel and reboot before benchmarking." >&2
 fi
 
-echo "==> Ensuring build dependencies"
-apt_need \
+echo "==> Installing build dependencies"
+sudo apt-get update -y
+sudo apt-get install -y --no-install-recommends \
   build-essential pkg-config git curl \
   clang libclang-dev llvm-dev \
   flex bison patchelf \
@@ -42,34 +44,39 @@ apt_need \
   python3 python3-pip
 
 # libkrun's Rust deps (clang-sys / bindgen) need libclang at build time.
-if [[ -z "${LIBCLANG_PATH:-}" ]] && have_lib 'libclang.so*'; then
-  LIBCLANG_PATH="$(dirname "$(find /usr/lib -name 'libclang.so*' 2>/dev/null | head -n1)")"
-  export LIBCLANG_PATH
-  echo "==> LIBCLANG_PATH=${LIBCLANG_PATH}"
+if [[ -z "${LIBCLANG_PATH:-}" ]]; then
+  LC="$(find /usr/lib -name 'libclang.so*' 2>/dev/null | head -n1)"
+  if [[ -n "${LC}" ]]; then
+    export LIBCLANG_PATH="$(dirname "${LC}")"
+    echo "==> LIBCLANG_PATH=${LIBCLANG_PATH}"
+  fi
 fi
 
-if user_has_cargo; then
-  echo "==> Rust toolchain already present for $(target_user), skipping rustup"
+if command -v cargo >/dev/null 2>&1 || [[ -x "${HOME}/.cargo/bin/cargo" ]]; then
+  echo "==> Rust toolchain already present, skipping rustup"
 else
-  echo "==> Installing Rust toolchain via rustup for $(target_user)"
-  sudo -u "$(target_user)" sh -c \
-    'curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y'
+  echo "==> Installing Rust toolchain via rustup"
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 fi
-CARGO_RUN="$(cargo_env_for)"
+export PATH="${HOME}/.cargo/bin:${PATH}"
 
 echo "==> Building libkrun (containers/libkrun)"
 mkdir -p "${SRC_DIR}"
-git_sync https://github.com/containers/libkrun.git "${SRC_DIR}/libkrun"
+if [[ ! -d "${SRC_DIR}/libkrun/.git" ]]; then
+  git clone https://github.com/containers/libkrun.git "${SRC_DIR}/libkrun"
+fi
 cd "${SRC_DIR}/libkrun"
-make PREFIX="${PREFIX}"
-make install PREFIX="${PREFIX}"
-ldconfig
+make
+sudo make install PREFIX="${PREFIX}"
+sudo ldconfig
 
 echo "==> Building muvm (AsahiLinux/muvm)"
-git_sync https://github.com/AsahiLinux/muvm.git "${SRC_DIR}/muvm"
+if [[ ! -d "${SRC_DIR}/muvm/.git" ]]; then
+  git clone https://github.com/AsahiLinux/muvm.git "${SRC_DIR}/muvm"
+fi
 cd "${SRC_DIR}/muvm"
-${CARGO_RUN} cargo build --release
-install -m 0755 target/release/muvm "${PREFIX}/bin/muvm"
+cargo build --release
+sudo install -m 0755 target/release/muvm "${PREFIX}/bin/muvm"
 
 cat <<EOF
 

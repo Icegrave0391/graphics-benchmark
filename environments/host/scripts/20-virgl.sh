@@ -5,14 +5,14 @@
 # VirGL is the OpenGL path over virtio-gpu. Stock virglrenderer 1.0.0 already
 # supports it, so this is apt-only. Run after 00-base-kvm.sh and 05-qemu-10.2.sh.
 set -euo pipefail
-. "$(dirname "$0")/lib/common.sh"
 
 if [[ "${EUID}" -ne 0 ]]; then
   exec sudo -E "$0" "$@"
 fi
 
 echo "==> Installing VirGL / OpenGL runtime"
-apt_need \
+apt-get update -y
+apt-get install -y --no-install-recommends \
   libvirglrenderer1 \
   qemu-system-modules-opengl \
   libgl1-mesa-dri \
