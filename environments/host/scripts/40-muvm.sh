@@ -75,6 +75,9 @@ if [[ ! -d "${SRC_DIR}/muvm/.git" ]]; then
   git clone https://github.com/AsahiLinux/muvm.git "${SRC_DIR}/muvm"
 fi
 cd "${SRC_DIR}/muvm"
+# muvm's krun-sys crate finds libkrun via pkg-config; libkrun installed under
+# ${PREFIX} is not on the default pkg-config search path, so add it.
+export PKG_CONFIG_PATH="${PREFIX}/lib/pkgconfig:${PREFIX}/lib64/pkgconfig:${PREFIX}/lib/x86_64-linux-gnu/pkgconfig:${PKG_CONFIG_PATH:-}"
 cargo build --release
 sudo install -m 0755 target/release/muvm "${PREFIX}/bin/muvm"
 
