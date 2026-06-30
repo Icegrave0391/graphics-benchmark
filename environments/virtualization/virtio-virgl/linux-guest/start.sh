@@ -26,10 +26,17 @@ parse_common_args "$@"
 check_qemu_guest
 warn_if_no_virgl
 
-# VirGL: virtio-gpu-gl WITHOUT venus. blob=true enables blob resources (shared
-# memory) which VirGL also benefits from; the memfd backend is in base_qemu_args.
+# VirGL: virtio-vga-gl WITHOUT venus. We use virtio-VGA-gl (not virtio-gpu-gl)
+# so the device is ALSO a VGA-compatible primary display from firmware time.
+# With the plain virtio-gpu-gl, OVMF/UEFI brings up an EFI framebuffer that the
+# guest exposes as simpledrm (card0); Xorg then picks simpledrm as the primary
+# GPU and GL falls back to llvmpipe (software), even though virgl works on the
+# render node. virtio-vga-gl is the boot display from the start, so the guest's
+# Xorg binds the accelerated virtio-gpu and GL is real virgl. No guest cmdline
+# changes are needed. blob=true enables blob (shared-memory) resources; the
+# memfd backend is in base_qemu_args.
 GPU_ARGS=(
-  -device "virtio-gpu-gl,blob=true"
+  -device "virtio-vga-gl,blob=true"
 )
 
 run_qemu "virgl-linux (virtio-gpu + VirGL, OpenGL)" -- "${GPU_ARGS[@]}"

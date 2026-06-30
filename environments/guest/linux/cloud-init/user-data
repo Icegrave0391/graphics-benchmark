@@ -57,6 +57,10 @@ runcmd:
   # Sanity probe for the Vulkan stack (works without a display); GL probes need
   # an X server, so run those later inside the desktop session.
   - [ sh, -c, "vulkaninfo --summary >/var/log/gfx-vulkaninfo.txt 2>&1 || true" ]
+  # Legacy libssl1.1 for the 2020 Basemark GPU render binaries (they link
+  # OpenSSL 1.1; Ubuntu 24.04 ships only OpenSSL 3). apt has no libssl1.1, so
+  # pull the .deb from the 20.04 security pocket. Harmless if Basemark isn't used.
+  - [ sh, -c, "curl -fL -o /tmp/libssl1.1.deb http://security.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2.24_amd64.deb && apt-get install -y /tmp/libssl1.1.deb || true" ]
 
 # Grow the root fs to fill the resized disk.
 growpart:
@@ -88,12 +92,20 @@ packages:
   - ubuntu-desktop-minimal
   # frame capture (Linux capture layer per design §4)
   - mangohud
-  # misc
-  - pciutils
-  - jq
-  - curl
-  # frame capture (Linux capture layer per design §4)
-  - mangohud
+  # --- workload deps (host provisions the self-contained tools via virt-copy-in;
+  #     these are the apt-installable bits they need at runtime) ---
+  # L2 open-source workloads (precompiled in universe)
+  - vkmark
+  - glmark2-x11
+  - glmark2-drm
+  # unpack Windows .msi (DX GravityMark) without Wine
+  - msitools
+  # X libs the GravityMark/Basemark binaries link against
+  - libx11-6
+  - libxext6
+  - libxi6
+  - libxrandr2
+  - libxcb1
   # misc
   - pciutils
   - jq

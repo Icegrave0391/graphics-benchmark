@@ -27,11 +27,32 @@ for every scheme in the matrix. The host is Ubuntu 24.04 LTS on AMD.
 | VirGL (OpenGL) | ✅ | stock `libvirglrenderer1` 1.0.0 has VirGL |
 | **Venus (Vulkan)** | ❌ **build required** | stock virglrenderer has no `venus` (QEMU already covered by `05`) |
 | **muvm (libkrun)** | ❌ **build required** | no apt package; needs virglrenderer w/ drm native context + kernel ≥ 6.13 |
-| AMD / Mesa / Vulkan | ✅ | Mesa 25.2.8 on 24.04 amd64, RADV is new enough |
+| AMD / Mesa / Vulkan | ✅ | Host RADV matters for Venus. Stock Mesa can expose Venus but crashed in our Renoir/Cezanne host tests (`vkr-ring-*` segfault in `libvulkan_radeon.so`); Mesa 26.1.3 from kisak-mesa fixed the crash. See `scripts/35-radv-kisak.sh`. |
 
 One source build of virglrenderer (with both `-Dvenus=true` and drm native
 context) serves **both** Venus and muvm. QEMU 10.2 is built once by `05` and
 shared by all schemes.
+
+### Host Vulkan ICD for Venus
+
+Venus decodes guest Vulkan on the host through the host Vulkan ICD. To keep the
+path attributable, prefer RADV and force it when AMDVLK is also installed:
+
+```sh
+cd environments/virtualization/virtio-venus/linux-guest
+./start.sh --gui
+```
+
+The venus launcher defaults to RADV. It sets
+`VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/radeon_icd.json` and disables AMDVLK's
+implicit switchable-graphics layer. A known-good host RADV on this test
+machine is Mesa `26.1.3 - kisak-mesa PPA`; Ubuntu stock Mesa crashed in the host
+venus decoder (`vkr-ring-*` segfault in `libvulkan_radeon.so`) under vkmark /
+GravityMark. AMDVLK can still be used as a workaround/A-B check:
+
+```sh
+HOST_VK_ICD=amdvlk ./start.sh --gui
+```
 
 ## Scripts
 

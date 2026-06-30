@@ -25,7 +25,8 @@
 #   SSH_USER    guest username                    (default user)
 #   SSH_KEY     private key path                  (default ./.ssh/guest-key)
 #   GUEST_HOST  guest host/addr                   (default localhost)
-#   DISPLAY     X display for GL probe in-guest   (default :0)
+#   DISPLAY     X display for the glxinfo fallback only (default :0). The GL
+#               probe prefers eglinfo and needs no X display.
 
 # --- logging -----------------------------------------------------------------
 if [[ -t 1 ]]; then
@@ -54,8 +55,28 @@ vulkan_device_names() {
     | sed -n 's/.*deviceName[[:space:]]*=[[:space:]]*//p'
 }
 
-# gl_renderer: the OpenGL renderer string (needs an X display; tries :0).
+# gl_renderer: the OpenGL renderer string.
+#
+# Prefer EGL (eglinfo) over GLX (glxinfo). On a virtio-gpu guest the system
+# Xorg is typically a software (llvmpipe) X server, so GLX over DISPLAY=:0
+# reports llvmpipe even though the hardware GL path works fine. EGL via the
+# GBM/surfaceless/device platforms talks straight to the DRI render node
+# (/dev/dri/renderD*) and needs no X display, so it surfaces the real
+# accelerated renderer (e.g. "virgl ...") whether run locally or over SSH.
+#
+# Strategy:
+#   1) eglinfo -> first non-software renderer (the HW path), else first renderer.
+#   2) fall back to glxinfo (DISPLAY) only if eglinfo is unavailable.
 gl_renderer() {
+  if command -v eglinfo >/dev/null 2>&1; then
+    local names hw
+    names="$(eglinfo 2>/dev/null | sed -n 's/.*renderer:[[:space:]]*//p')"
+    if [[ -n "$names" ]]; then
+      hw="$(echo "$names" | grep -viE 'llvmpipe|softpipe|swrast' | head -1)"
+      echo "${hw:-$(echo "$names" | head -1)}"
+      return 0
+    fi
+  fi
   command -v glxinfo >/dev/null 2>&1 || return 0
   local disp="${DISPLAY:-:0}"
   DISPLAY="$disp" glxinfo -B 2>/dev/null \
@@ -92,7 +113,7 @@ classify_path() {
 detect_pipeline() {
   local vk gl dri
   vk="$(vulkan_device_names)"
-  gl="$(gl_renderer)"
+  gl="$(gl_renderer | head -1)"
   dri="$(dri_nodes)"
 
   # Prefer the hardware-accelerated Vulkan device if present, else GL.
@@ -162,7 +183,7 @@ FUNCTIONS (default: detect_pipeline)
   detect_pipeline        classify the active GPU path from device names
   detect_pipeline_remote SSH in and run detect_pipeline in the guest
   vulkan_device_names    list Vulkan deviceName strings
-  gl_renderer            print the OpenGL renderer string (needs X)
+  gl_renderer            print the OpenGL renderer string (EGL, X-less)
   dri_nodes              list /dev/dri entries
 
 ENV (overridable)
