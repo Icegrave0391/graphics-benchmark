@@ -15,10 +15,18 @@
 #
 # Run as your normal user (NOT root): it builds as you and uses sudo only for
 # the install steps.
+#
+# VERSION COUPLING (important): libkrun and muvm must match. muvm-0.6.0 ships
+# krun-sys 1.10.1 and calls krun_set_passt_fd / krun_set_root /
+# krun_set_log_level. libkrun master has REMOVED those symbols, so building both
+# from master fails. We pin libkrun to v1.10.1 (still exports them) and muvm to
+# tag muvm-0.6.0. Bump both together if you upgrade.
 set -euo pipefail
 
 SRC_DIR="${SRC_DIR:-${HOME}/src/graphics-benchmark}"
 PREFIX="${PREFIX:-/usr/local}"
+LIBKRUN_REF="${LIBKRUN_REF:-v1.10.1}"
+MUVM_REF="${MUVM_REF:-muvm-0.6.0}"
 
 if [[ "${EUID}" -eq 0 ]]; then
   echo "ERROR: run this as your normal user, NOT root/sudo." >&2
@@ -66,6 +74,9 @@ if [[ ! -d "${SRC_DIR}/libkrun/.git" ]]; then
   git clone https://github.com/containers/libkrun.git "${SRC_DIR}/libkrun"
 fi
 cd "${SRC_DIR}/libkrun"
+git fetch --tags
+git checkout "${LIBKRUN_REF}"
+make clean 2>/dev/null || true
 make
 sudo make install PREFIX="${PREFIX}"
 sudo ldconfig
@@ -75,6 +86,8 @@ if [[ ! -d "${SRC_DIR}/muvm/.git" ]]; then
   git clone https://github.com/AsahiLinux/muvm.git "${SRC_DIR}/muvm"
 fi
 cd "${SRC_DIR}/muvm"
+git fetch --tags
+git checkout "${MUVM_REF}"
 # muvm's krun-sys crate finds libkrun via pkg-config; libkrun installed under
 # ${PREFIX} is not on the default pkg-config search path, so add it.
 export PKG_CONFIG_PATH="${PREFIX}/lib/pkgconfig:${PREFIX}/lib64/pkgconfig:${PREFIX}/lib/x86_64-linux-gnu/pkgconfig:${PKG_CONFIG_PATH:-}"
