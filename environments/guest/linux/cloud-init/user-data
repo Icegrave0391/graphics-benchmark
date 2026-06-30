@@ -1,0 +1,61 @@
+#cloud-config
+# cloud-init config for the graphics-benchmark guest (Ubuntu 24.04 cloud image).
+# Placeholders @USERNAME@/@HOSTNAME@/@SSH_PUBKEY@ are filled by create-vmdisk.sh
+# before the NoCloud seed ISO is built.
+
+hostname: "@HOSTNAME@"
+
+# Replace the default 'ubuntu' user with our own.
+users:
+  - name: "@USERNAME@"
+    # passwordless sudo
+    sudo: "ALL=(ALL) NOPASSWD:ALL"
+    groups: [adm, sudo, video, render, kvm]
+    shell: /bin/bash
+    lock_passwd: false          # account stays usable; password is emptied below
+    ssh_authorized_keys:
+      - "@SSH_PUBKEY@"
+
+# Allow password SSH off (we use keys). Console login is passwordless.
+ssh_pwauth: false
+
+# Empty the password so console/login needs no password (SSH stays key-only).
+runcmd:
+  - [ passwd, -d, "@USERNAME@" ]
+  - [ systemctl, enable, --now, ssh ]
+  # Sanity probes for the graphics stack; results land in the guest log.
+  - [ sh, -c, "vulkaninfo --summary >/var/log/gfx-vulkaninfo.txt 2>&1 || true" ]
+  - [ sh, -c, "glxinfo -B >/var/log/gfx-glxinfo.txt 2>&1 || true" ]
+
+# Grow the root fs to fill the resized disk.
+growpart:
+  mode: auto
+  devices: ["/"]
+resize_rootfs: true
+
+package_update: true
+package_upgrade: false
+
+# Graphics userspace + benchmark prerequisites. This is what actually provides
+# rendering — independent of any desktop environment (we run headless).
+packages:
+  # Mesa: RADV (Vulkan), radeonsi (GL), virgl/venus client drivers
+  - mesa-vulkan-drivers
+  - mesa-utils
+  - libgl1-mesa-dri
+  - libglx-mesa0
+  - libegl-mesa0
+  - libgles2
+  # Vulkan loader + tools
+  - libvulkan1
+  - vulkan-tools
+  # GL/EGL inspection
+  - mesa-utils-bin
+  # frame capture (Linux capture layer per design §4)
+  - mangohud
+  # misc
+  - pciutils
+  - jq
+  - curl
+
+final_message: "graphics-benchmark guest ready after $UPTIME seconds"

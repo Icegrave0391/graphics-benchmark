@@ -10,3 +10,12 @@ captures/
 *.swp
 .idea/
 .vscode/
+
+# Guest VM artifacts (large / generated)
+*.iso
+*.img
+*.qcow2
+environments/guest/*/vmdisk/
+# NOTE: the guest SSH keypair (.ssh/guest-key{,.pub}) is intentionally committed.
+# It only authenticates to throwaway benchmark VMs — no privacy concern — so a
+# fresh clone can SSH in without regenerating keys.
