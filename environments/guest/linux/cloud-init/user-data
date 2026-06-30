@@ -23,9 +23,40 @@ ssh_pwauth: false
 runcmd:
   - [ passwd, -d, "@USERNAME@" ]
   - [ systemctl, enable, --now, ssh ]
-  # Sanity probes for the graphics stack; results land in the guest log.
+  # GDM: autologin our user into a GNOME *Xorg* (X11) session, with Wayland off.
+  - |
+    mkdir -p /etc/gdm3
+    cat > /etc/gdm3/custom.conf <<EOF
+    [daemon]
+    WaylandEnable=false
+    AutomaticLoginEnable=true
+    AutomaticLogin=@USERNAME@
+    DefaultSession=ubuntu-xorg
+    EOF
+  # Default the user's session to GNOME-on-Xorg so autologin lands in X11.
+  - |
+    mkdir -p /var/lib/AccountsService/users
+    cat > /var/lib/AccountsService/users/@USERNAME@ <<EOF
+    [User]
+    Session=ubuntu-xorg
+    XSession=ubuntu-xorg
+    SystemAccount=false
+    EOF
+  # Boot into the graphical target and make GDM the active display manager.
+  # gdm3.service has no [Install] section (it's wired via the display-manager
+  # alias), so `systemctl enable gdm3` is a no-op/"alias" — set it the Debian way
+  # by pointing display-manager.service at gdm and recording it for the DM
+  # selection, then ensure graphical.target is the default.
+  - [ systemctl, set-default, graphical.target ]
+  - [ sh, -c, "echo /usr/sbin/gdm3 > /etc/X11/default-display-manager" ]
+  - [ sh, -c, "ln -sf /usr/lib/systemd/system/gdm3.service /etc/systemd/system/display-manager.service" ]
+  # systemd-networkd-wait-online blocks boot for ~120s (it waits for every link
+  # to be "online"); mask it so the graphical session comes up promptly.
+  - [ systemctl, mask, systemd-networkd-wait-online.service ]
+  - [ systemctl, disable, NetworkManager-wait-online.service ]
+  # Sanity probe for the Vulkan stack (works without a display); GL probes need
+  # an X server, so run those later inside the desktop session.
   - [ sh, -c, "vulkaninfo --summary >/var/log/gfx-vulkaninfo.txt 2>&1 || true" ]
-  - [ sh, -c, "glxinfo -B >/var/log/gfx-glxinfo.txt 2>&1 || true" ]
 
 # Grow the root fs to fill the resized disk.
 growpart:
@@ -36,8 +67,10 @@ resize_rootfs: true
 package_update: true
 package_upgrade: false
 
-# Graphics userspace + benchmark prerequisites. This is what actually provides
-# rendering — independent of any desktop environment (we run headless).
+# Graphics userspace + a full GNOME desktop. The guest renders and DISPLAYS
+# onscreen (the real use case: render-and-present, not off-screen), so benchmarks
+# run inside a real desktop session shown through the QEMU GTK window. Session is
+# GNOME on Xorg (X11) for best benchmark/DXVK/MangoHud compatibility.
 packages:
   # Mesa: RADV (Vulkan), radeonsi (GL), virgl/venus client drivers
   - mesa-vulkan-drivers
@@ -49,8 +82,16 @@ packages:
   # Vulkan loader + tools
   - libvulkan1
   - vulkan-tools
-  # GL/EGL inspection
+  # GL/EGL inspection + onscreen demos (glxgears, glxinfo, eglinfo all in mesa-utils)
   - mesa-utils-bin
+  # full GNOME desktop (brings GDM3, Xorg, GNOME Shell)
+  - ubuntu-desktop-minimal
+  # frame capture (Linux capture layer per design §4)
+  - mangohud
+  # misc
+  - pciutils
+  - jq
+  - curl
   # frame capture (Linux capture layer per design §4)
   - mangohud
   # misc

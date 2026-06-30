@@ -133,7 +133,7 @@ log_info "==> Waiting for cloud-init to finish (polling SSH on :$SSH_HOSTFWD_POR
 SSH_OPTS=(-p "$SSH_HOSTFWD_PORT" -i "$SSH_KEY"
   -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
   -o ConnectTimeout=5 -o LogLevel=ERROR)
-deadline=$(( SECONDS + 900 ))   # up to 15 min for first-boot package install
+deadline=$(( SECONDS + 2400 ))  # up to 40 min: first boot pulls a full GNOME desktop
 ready=0
 while (( SECONDS < deadline )); do
   if ! kill -0 "$QEMU_PID" 2>/dev/null; then

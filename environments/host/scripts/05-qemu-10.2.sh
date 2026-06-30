@@ -38,8 +38,11 @@ apt-get install -y --no-install-recommends \
   libglib2.0-dev libpixman-1-dev zlib1g-dev libfdt-dev \
   libslirp-dev libusb-1.0-0-dev libaio-dev \
   libepoxy-dev libgbm-dev libdrm-dev libegl-dev libgl-dev \
+  libgtk-3-dev libvte-2.91-dev \
   libseccomp-dev libcap-ng-dev \
   flex bison wget xz-utils
+# libgtk-3-dev enables the 'gtk' display backend (used by the --gui mode of the
+# virtualization launchers for bring-up; benchmarks themselves run headless).
 #
 # NOTE: we intentionally do NOT install the apt 'libvirglrenderer-dev' (1.0.0,
 # no venus). For the Venus path you must build the venus-enabled virglrenderer
@@ -82,20 +85,17 @@ else
 fi
 cd "qemu-${QEMU_VERSION}"
 
-echo "==> Configuring QEMU (x86_64, KVM, OpenGL, virglrenderer)"
+echo "==> Configuring QEMU (x86_64, KVM, OpenGL, virglrenderer, GTK)"
 mkdir -p build && cd build
-if [[ -f build.ninja ]]; then
-  echo "    build dir already configured; ninja will reconfigure on changes"
-else
-  ../configure \
-    --prefix="${PREFIX}" \
-    --target-list=x86_64-softmmu \
-    --enable-kvm \
-    --enable-opengl \
-    --enable-virglrenderer \
-    --enable-slirp \
-    --enable-seccomp
-fi
+../configure \
+  --prefix="${PREFIX}" \
+  --target-list=x86_64-softmmu \
+  --enable-kvm \
+  --enable-opengl \
+  --enable-virglrenderer \
+  --enable-gtk \
+  --enable-slirp \
+  --enable-seccomp
 
 echo "==> Confirming QEMU picked up virglrenderer"
 if grep -Eiq 'virglrenderer.*(YES|true|enabled)' config-host.mak meson-logs/meson-log.txt 2>/dev/null; then
