@@ -29,8 +29,13 @@ directory name and in `run_id`s.
 |                           | `pt-windows`    | `virtualization/passthrough/windows-guest/` | Windows | full-card passthrough          |
 | VirtIO-GPU + VirGL        | `virgl-linux`   | `virtualization/virtio-virgl/linux-guest/`  | Linux   | virtio-gpu + VirGL (GL only)   |
 | VirtIO-GPU + Venus        | `venus-linux`   | `virtualization/virtio-venus/linux-guest/`  | Linux   | virtio-gpu + Venus (Vulkan)    |
-|                           | `venus-windows` | `virtualization/virtio-venus/windows-guest/`| Windows | virtio-gpu + Venus (experimental) |
 | muvm (libkrun + drm native ctx) | `muvm-linux` | `virtualization/muvm/linux-guest/`       | Linux   | libkrun + drm native context   |
+
+> No `venus-windows`: on a Linux host, virtio-gpu has no usable 3D driver for
+> Windows guests (`viogpudo` is display-only → DX/GL/Vulkan fall back to software,
+> host GPU unused). Windows virtualized graphics is measured via `pt-windows`
+> (passthrough) only. The virtio paths are Linux-guest only. See
+> `../docs/benchmark-design.md` §6.
 
 ## API routing (fixed)
 

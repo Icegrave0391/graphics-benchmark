@@ -9,4 +9,6 @@ official Windows driver. No virtualization.
 - [ ] Document fixed clocks / power settings for repeatability.
 - [ ] List workloads run here: L1 GravityMark (Vk/D3D12/D3D11/GL), L2 Basemark GPU.
 
-Reference baseline for: 2.1b (passthrough Windows), 2.2c (Venus Windows).
+Reference baseline for `pt-windows` (passthrough Windows). There is no
+`venus-windows` (virtio-gpu has no 3D driver for Windows guests — see
+`../../../docs/benchmark-design.md` §6).

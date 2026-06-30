@@ -1,10 +1,14 @@
 # Windows guest image
 
-Windows guest used for the DirectX/Vulkan/OpenGL baselines and their
-virtualized counterparts. The host is always Linux; this is the Windows *guest*,
-built into a reusable `qcow2` by an unattended install. Mirrors the Linux guest
-layout (`.env` / `create-vmdisk.sh` / `start-vm.sh` / `ssh-vm.sh`, plus
-`get-windows-iso.sh` for the ISO download).
+Windows guest for the `native-windows` baseline and the `pt-windows`
+(passthrough) virtualized path. The host is always Linux; this is the Windows
+*guest*, built into a reusable `qcow2` by an unattended install. Mirrors the
+Linux guest layout (`.env` / `create-vmdisk.sh` / `start-vm.sh` / `ssh-vm.sh`,
+plus `get-windows-iso.sh` for the ISO download).
+
+> There is **no virtio (venus/virgl) path for Windows** — virtio-gpu has no 3D
+> driver for Windows guests, so Windows virtualized graphics is only measured via
+> passthrough. Details below ("Why there is no virtio path for Windows").
 
 Result of a build: `vmdisk/windows-vm.qcow2` with
 
@@ -27,14 +31,38 @@ virtio/guest-agent install.
 | Matrix row | GPU path | Status |
 |---|---|---|
 | `native-windows` | bare metal (not this VM dir) | native DX/Vulkan/GL |
-| `pt-windows` | **VFIO full-card passthrough** → native AMD Windows driver | **primary** real-graphics path |
-| `venus-windows` | virtio-gpu + Venus | **experimental** (Windows Venus ICD immature — design §6) |
+| `pt-windows` | **VFIO full-card passthrough** → native AMD Windows driver | **only** virtualized graphics path |
+| ~~`venus-windows`~~ | ~~virtio-gpu + Venus~~ | **dropped — not benchmarked** (see below) |
 
-`virtio-gpu` 3D on Windows is only basic 2D/framebuffer, so **real graphics
-benchmarking on Windows uses passthrough** (`pt-windows`): the guest runs the
-native AMD Windows driver and native DirectX. This build produces the base image;
-the passthrough launcher lives under
-`environments/virtualization/passthrough/windows-guest/`.
+### Why there is no virtio (venus/virgl) path for Windows
+
+On a **Linux host with a Windows guest, virtio-gpu has no usable 3D driver**.
+The official virtio-win GPU driver (`viogpudo`) is **display-only** — 2D
+framebuffer, no OpenGL/Vulkan/DirectX hardware path. This is architectural, not
+a version issue: the current virtio-win (0.1.285) still ships only `viogpudo`,
+and there is **no `viogpu` (full WDDM/3D) driver** in any release.
+
+Consequences in a Windows virtio-gpu VM:
+
+- DirectX falls back to **WARP** (CPU software rasterizer); GL falls back to
+  GDI/OpenGL 1.1. The **host GPU is never used**.
+- `dxdiag` shows `Direct3D 0/4` (acceleration unavailable); real benchmarks
+  (GpuTest, Basemark, etc.) either run as pure CPU software or just exit.
+- So a Windows virtio-gpu VM **cannot produce meaningful graphics numbers** —
+  swapping API (DX/GL/Vulkan) does not help.
+
+Community status (for tracking): virtio-win
+[#773](https://github.com/virtio-win/kvm-guest-drivers-windows/issues/773),
+[#841](https://github.com/virtio-win/kvm-guest-drivers-windows/issues/841),
+PR [#943](https://github.com/virtio-win/kvm-guest-drivers-windows/pull/943)
+(viogpu3d: virgl + D3D10, black-screen/BSOD, unmerged, declared a dead end). A
+Venus(Vulkan)+VKD3D-based Windows driver is WIP but **not released**.
+
+**Therefore Windows virtualized graphics is measured only via `pt-windows`**
+(passthrough → native AMD Windows driver → native DirectX). This guest image is
+built here and attached to the passthrough launcher under
+`environments/virtualization/passthrough/windows-guest/`. The virtio paths
+(VirGL/Venus) are **Linux-guest only**.
 
 > Passthrough needs a second, discrete, vfio-bindable GPU (you cannot pass
 > through the host's only/APU GPU). See `environments/host/scripts/10-passthrough.sh`.

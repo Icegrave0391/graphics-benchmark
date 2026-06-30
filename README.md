@@ -90,8 +90,15 @@ directory name and in result `run_id`s.
 |                                 | `pt-windows`    | Windows | full-card passthrough         |
 | VirtIO-GPU + VirGL              | `virgl-linux`   | Linux   | virtio-gpu + VirGL (GL only)  |
 | VirtIO-GPU + Venus              | `venus-linux`   | Linux   | virtio-gpu + Venus (Vulkan)   |
-|                                 | `venus-windows` | Windows | virtio-gpu + Venus (experimental) |
 | muvm (libkrun + drm native ctx) | `muvm-linux`    | Linux   | drm native context (lowest)   |
+
+> **Windows guests use passthrough only for graphics.** On a Linux host,
+> virtio-gpu has **no usable 3D driver for Windows guests** — the official
+> virtio-win GPU driver (`viogpudo`) is display-only (2D), so DX/GL/Vulkan fall
+> back to software (WARP) and never touch the host GPU. So there is no
+> `venus-windows` row; the virtio paths (VirGL/Venus) are Linux-guest only, and
+> Windows virtualized graphics is measured via `pt-windows` (passthrough, native
+> AMD Windows driver). See `docs/benchmark-design.md` §6.
 
 ## Workloads
 

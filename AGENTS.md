@@ -13,7 +13,12 @@ code, no build/test/lint/CI yet.
 ## Environment IDs (use these verbatim)
 Short self-describing IDs are the convention, not numbers: `native-windows`,
 `native-linux`, `pt-linux`, `pt-windows`, `virgl-linux`, `venus-linux`,
-`venus-windows`, `muvm-linux`. Used as dir names and result `run_id`s.
+`muvm-linux`. Used as dir names and result `run_id`s.
+
+There is **no `venus-windows`** (dropped): on a Linux host, virtio-gpu has no 3D
+driver for Windows guests (`viogpudo` is display-only), so Windows virtualized
+graphics is only done via `pt-windows` (passthrough). virtio paths are Linux-only.
+See `docs/benchmark-design.md` §6.
 
 ## Host script rules (hard-won, easy to get wrong)
 - `00-base-kvm.sh`, `05-qemu-10.2.sh`, `10/20/30` **self-elevate** (`exec sudo`). Run them as a normal user; do not prefix `sudo`.
