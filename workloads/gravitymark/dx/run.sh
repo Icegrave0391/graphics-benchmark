@@ -27,13 +27,13 @@ PROTON_RUN="$(cd "$LAYER_DIR/../../proton" && pwd)/run.sh"
 GM_EXE="$(find "$LAYER_DIR/GravityMark-win" -type f -iname 'GravityMark.exe' 2>/dev/null | head -n1)"
 [[ -z "$GM_EXE" ]] && { log_err "GravityMark.exe not found; run $LAYER_DIR/install.sh first"; exit 1; }
 
-API_FLAG="-d3d11"
+API_FLAG="-direct3d11"
 MANGOHUD_ARGS=()
 EXTRA=()
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --d3d11) API_FLAG="-d3d11"; shift ;;
-    --d3d12) API_FLAG="-d3d12"; shift ;;
+    --d3d11) API_FLAG="-direct3d11"; shift ;;
+    --d3d12) API_FLAG="-direct3d12"; shift ;;
     --mangohud) MANGOHUD_ARGS=(--mangohud); shift ;;
     --) shift; EXTRA=( "$@" ); break ;;
     *) EXTRA+=( "$1" ); shift ;;

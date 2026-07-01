@@ -76,12 +76,18 @@ run_umu() {
     log_err "Run workloads/proton/install.sh first."
     return 1
   }
-  env \
-    WINEPREFIX="$PROTON_PREFIX" \
-    GAMEID="$GAMEID" \
-    STORE="$STORE" \
-    PROTONPATH="$proton_env" \
-    umu-run "$EXE_ABS" "$@"
+  # Many benchmark bundles (GravityMark in particular) expect their process cwd
+  # to be the executable directory so relative assets like ../data.zip resolve.
+  # umu-run accepts an absolute exe path but does not change cwd for us.
+  (
+    cd "$(dirname "$EXE_ABS")"
+    env \
+      WINEPREFIX="$PROTON_PREFIX" \
+      GAMEID="$GAMEID" \
+      STORE="$STORE" \
+      PROTONPATH="$proton_env" \
+      umu-run "$EXE_ABS" "$@"
+  )
 }
 
 if [[ "$USE_MANGOHUD" == "1" ]]; then

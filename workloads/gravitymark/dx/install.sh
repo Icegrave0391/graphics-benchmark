@@ -11,7 +11,7 @@
 # Distribution: Tellusim ships Windows as an .msi (precompiled). We extract the
 # payload with msiextract (msitools) — no Wine needed to unpack — to get
 # GravityMark.exe + its DLLs/data. Then run.sh launches it under Proton with
-# -d3d11 or -d3d12.
+# -direct3d11 or -direct3d12.
 #
 # Requires the shared Proton runtime first:  workloads/proton/install.sh
 # Identical on native-linux and the Linux guest. Run as your normal user.
@@ -68,6 +68,6 @@ Run the DirectX path (DXVK for D3D11, VKD3D-Proton for D3D12):
     $LAYER_DIR/run.sh --d3d11 --mangohud     # unified frame capture
 
 On venus-linux this DX->Vulkan output runs on the host through Venus (start the
-VM with the default RADV host ICD). GravityMark Windows CLI uses -d3d11 / -d3d12
+VM with the default RADV host ICD). GravityMark Windows CLI uses -direct3d11 / -direct3d12
 (instead of -vulkan/-opengl), plus -benchmark 1 / -close 1 / -asteroids N.
 EOF

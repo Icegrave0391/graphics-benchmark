@@ -30,6 +30,7 @@
 # Run as your normal user (NOT root). Env overrides:
 #   UMU_VERSION   umu-launcher release tag (default 1.4.0)
 #   UMU_PROTON_VERSION  UMU-Proton release to cache/install (default 10.0-4)
+#   PROTONPATH    specific Proton directory (default ~/.local/share/umu/compatibilitytools/UMU-Proton)
 #   PROTON_PREFIX wine prefix to create (default workloads/proton/prefix)
 #   WL_NO_PRIME=1 skip the priming run (download Proton lazily on first use)
 
@@ -51,6 +52,7 @@ UMU_PROTON_TAG="UMU-Proton-${UMU_PROTON_VERSION}"
 UMU_PROTON_TGZ="${UMU_PROTON_TAG}.tar.gz"
 UMU_PROTON_BASE="https://github.com/Open-Wine-Components/umu-proton/releases/download/${UMU_PROTON_TAG}"
 UMU_COMPAT_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/umu/compatibilitytools"
+DEFAULT_PROTONPATH="$UMU_COMPAT_DIR/UMU-Proton"
 
 log_info "==> Installing DirectX runtime: umu-launcher ${UMU_VERSION} + Proton"
 
@@ -96,7 +98,7 @@ else
   log_info "==> UMU-Proton already installed under $UMU_COMPAT_DIR"
 fi
 
-export PROTONPATH="${PROTONPATH:-UMU-Proton}"
+export PROTONPATH="${PROTONPATH:-$DEFAULT_PROTONPATH}"
 
 mkdir -p "$PROTON_PREFIX"
 

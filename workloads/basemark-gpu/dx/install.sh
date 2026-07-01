@@ -29,7 +29,10 @@ BMK_VERSION="${BMK_VERSION:-1.2.3}"
 BMK_EXE="BasemarkGPU-windows-x64-${BMK_VERSION}.exe"
 BMK_EXE_URL="${BMK_EXE_URL:-https://cdn.downloads.basemark.com/${BMK_EXE}}"
 
-PROTON_PREFIX="${PROTON_PREFIX:-$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")/../../proton" && pwd)/prefix}"
+LAYER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
+PROTON_DIR="$(cd "$LAYER_DIR/../../proton" && pwd)"
+PROTON_PREFIX="${PROTON_PREFIX:-$PROTON_DIR/prefix}"
+PROTON_RUN="$PROTON_DIR/run.sh"
 EXE_CACHE="$WL_CACHE/$BMK_EXE"
 
 log_info "==> Installing DX workload: Windows Basemark GPU ${BMK_VERSION}"
@@ -44,6 +47,7 @@ if [[ "${WL_DOWNLOAD_ONLY:-0}" == "1" ]]; then
 fi
 
 need_cmd umu-run
+[[ -x "$PROTON_RUN" ]] || { log_err "shared Proton runner missing: $PROTON_RUN (run workloads/proton/install.sh)"; exit 1; }
 if [[ ! -d "$PROTON_PREFIX" ]]; then
   log_err "Proton prefix not found: $PROTON_PREFIX"
   log_err "Run the shared Proton runtime installer first: workloads/proton/install.sh"
@@ -57,8 +61,7 @@ EXE_ABS="$(cd "$(dirname "$EXE_CACHE")" && pwd)/$(basename "$EXE_CACHE")"
 INSTALL_ARGS=()
 [[ "${BMK_SILENT:-0}" == "1" ]] && INSTALL_ARGS+=( /S )
 
-WINEPREFIX="$PROTON_PREFIX" GAMEID="umu-default" STORE="none" \
-  umu-run "$EXE_ABS" "${INSTALL_ARGS[@]}" || log_warn "installer returned non-zero"
+"$PROTON_RUN" -- "$EXE_ABS" "${INSTALL_ARGS[@]}" || log_warn "installer returned non-zero"
 
 BMK_INSTALLED="$(find "$PROTON_PREFIX/drive_c" -type f -iname 'basemark*gpu*.exe' 2>/dev/null | head -n1)"
 [[ -z "$BMK_INSTALLED" ]] && BMK_INSTALLED="$(find "$PROTON_PREFIX/drive_c" -type f -iname 'basemark*.exe' 2>/dev/null | grep -vi 'unins' | head -n1)"
