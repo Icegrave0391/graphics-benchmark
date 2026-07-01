@@ -7,7 +7,7 @@ official Windows driver. No virtualization.
 
 - [ ] `SETUP.md` — Windows install, AMD driver version, capture tooling (PresentMon).
 - [ ] Document fixed clocks / power settings for repeatability.
-- [ ] List workloads run here: L1 GravityMark (Vk/D3D12/D3D11/GL), L2 Basemark GPU.
+- [ ] List workloads run here: Basemark GPU (Vk/D3D12/D3D11/GL where available).
 
 Reference baseline for `pt-windows` (passthrough Windows). There is no
 `venus-windows` (virtio-gpu has no 3D driver for Windows guests — see

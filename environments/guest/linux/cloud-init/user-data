@@ -94,12 +94,6 @@ packages:
   - mangohud
   # --- workload deps (host provisions the self-contained tools via virt-copy-in;
   #     these are the apt-installable bits they need at runtime) ---
-  # L2 open-source workloads (precompiled in universe)
-  - vkmark
-  - glmark2-x11
-  - glmark2-drm
-  # unpack Windows .msi (DX GravityMark) without Wine
-  - msitools
   # X libs the GravityMark/Basemark binaries link against
   - libx11-6
   - libxext6

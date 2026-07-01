@@ -89,7 +89,7 @@ the autologin X display):
 
 ```sh
 ./ssh-vm.sh -- 'DISPLAY=:0 glxgears'
-./ssh-vm.sh -- 'DISPLAY=:0 glmark2'
+./ssh-vm.sh -- 'DISPLAY=:0 /home/user/graphics-benchmark/workloads/basemark-gpu/run.sh --api gl'
 ```
 
 ## Notes

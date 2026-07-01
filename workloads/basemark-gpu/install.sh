@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 #
-# install-basemark-gpu.sh — L2 headline workload (Basemark GPU) on Linux.
+# install.sh — Basemark GPU workload on Linux.
 #
-# Basemark GPU is the design's primary L2 tool (real-world, CPU+GPU,
+# Basemark GPU is the primary benchmark workload (real-world, CPU+GPU,
 # tens-of-thousands of draw calls per frame). The current Linux build ships as a
 # standalone PRECOMPILED tarball from Basemark's CDN — no source build, no
 # registration form, stable direct link — so this script downloads and extracts
@@ -13,8 +13,7 @@
 #   (~1.16 GB). The tarball variant uses your SYSTEM Mesa/RADV — what we want —
 #   unlike the .flatpak variant which bundles an old Mesa 19.08.
 #
-# HARD CAVEATS (design §4 "已知坑", §6) — keep using vkmark/glmark2 for automated
-# L2, this tool is GUI-driven on Linux:
+# HARD CAVEATS:
 #   1. GUI-launcher driven; the free build has NO end-to-end CLI automation.
 #   2. Mandatory online: the free version uploads every result to the Basemark
 #      Power Board, so the guest MUST have network access.
@@ -42,7 +41,7 @@ LAYER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 INSTALL_DIR="$LAYER_DIR/BasemarkGPU"
 TARBALL_CACHE="${BASEMARK_TARBALL:-$WL_CACHE/$BASEMARK_TGZ}"
 
-log_info "==> Installing L2 workload: Basemark GPU ${BASEMARK_VERSION} (precompiled tarball)"
+log_info "==> Installing workload: Basemark GPU ${BASEMARK_VERSION} (precompiled tarball)"
 
 # Runtime deps to actually launch the GUI/renderer; no-op if already present
 # (the guest cloud-init already installs most of these).
@@ -125,7 +124,7 @@ so it launches normally:
 If the SUID fix didn't run (e.g. WL_SKIP_APT=1) or you prefer not to, launch with:
     ${LAUNCHER:-$INSTALL_DIR/<launcher>} --no-sandbox
 
-IMPORTANT caveats (design §4 / §6) — this tool is GUI-driven on Linux:
+IMPORTANT caveats:
  * No CLI automation in the free build. Launch the GUI, accept the license,
    then run the test by hand. In the guest, target the desktop X display:
        DISPLAY=:0 ${LAUNCHER:-$INSTALL_DIR/<launcher>}
@@ -134,9 +133,6 @@ IMPORTANT caveats (design §4 / §6) — this tool is GUI-driven on Linux:
  * AMD + RADV crashes at High/4K (drm fence timeout). Use MEDIUM quality and a
    non-4K resolution (e.g. 1920x1080) via the Custom tab.
  * Non-commercial license; do not publish results on ad-supported sites.
-
-For a fully scriptable, headless L2 instead, prefer:
-    workloads/l2-real-world/install-vkmark-glmark2.sh   (vkmark + glmark2)
 
 $(print_gpu_probe_hint)
 EOF

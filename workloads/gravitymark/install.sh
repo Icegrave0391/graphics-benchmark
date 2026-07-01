@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 #
-# install-gravitymark.sh — L1 GPU-bound workload (GravityMark) on Linux.
+# install.sh — GravityMark workload on Linux.
 #
-# GravityMark is the L1 layer (design §3.2/§4): a GPU-driven asteroid scene with
-# almost no CPU draw-call submission, so it measures raw GPU throughput. It has
-# a full CLI (-benchmark / -close / per-frame stats / preset / asteroids / api),
-# which is exactly why it was picked for automation.
+# GravityMark is kept as a standalone workload (not part of L1/L2/L3 layering).
+# It has a full CLI (-benchmark / -close / per-frame stats / asteroids / API),
+# which makes it useful for smoke-testing Vulkan/OpenGL paths.
 #
 # Distribution: Tellusim ships Linux as a Makeself .run self-installer. Running
 # it normally pops an interactive license + browser flow; we extract it with
@@ -34,7 +33,7 @@ LAYER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 INSTALL_DIR="$LAYER_DIR/GravityMark"
 RUN_CACHE="$WL_CACHE/$GM_RUN"
 
-log_info "==> Installing L1 workload: GravityMark ${GM_VERSION}"
+log_info "==> Installing workload: GravityMark ${GM_VERSION}"
 
 # Runtime needs Vulkan/GL/X libs to actually launch; on a freshly-built guest or
 # a minimal native host these may be missing. Pull the same userspace the guest
@@ -97,9 +96,9 @@ Notes:
  * Useful flags (see any run_*.sh header): -asteroids N (fix object count for
    cross-run consistency), -count N (passes), -times FILE (per-frame times),
    -image FILE (screenshot), -vsync 0, -width/-height.
- * GravityMark is GPU-bound (CPU nearly idle) — it shows GPU throughput, not
-   transport overhead. L3 (vkoverhead/drawoverhead) covers that later.
- * Normalize frame metrics via MangoHud for cross-tool consistency (design §3),
+ * GravityMark is GPU-bound (CPU nearly idle) — interpret it separately from
+   Basemark GPU's mixed CPU/GPU workload.
+ * Normalize frame metrics via MangoHud for cross-tool consistency,
    not GravityMark's self-reported FPS.
 
 $(print_gpu_probe_hint)

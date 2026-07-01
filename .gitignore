@@ -8,13 +8,9 @@ captures/
 
 # Workload tool downloads + extracted/installed payloads (large, non-redistributable)
 workloads/.cache/
-workloads/l1-gpu-bound/GravityMark/
-workloads/l2-real-world/BasemarkGPU/
-# DX path: Proton wine prefix, extracted Windows builds, captures, recorded versions
-workloads/dx/prefix/
-workloads/dx/GravityMark-win/
-workloads/dx/captures/
-workloads/dx/versions.txt
+workloads/gravitymark/GravityMark/
+workloads/basemark-gpu/BasemarkGPU/
+workloads/basemark-gpu/captures/
 
 # Editor / OS
 *.swp

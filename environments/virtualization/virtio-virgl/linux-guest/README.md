@@ -12,7 +12,7 @@ SSH port `2223`. Verify inside the guest that GL hits the real GPU:
 
 ```sh
 eglinfo -B | grep -i renderer      # expect AMD / virgl, not llvmpipe
-glmark2 --off-screen
+DISPLAY=:0 /home/user/graphics-benchmark/workloads/basemark-gpu/run.sh --api gl
 ```
 
 Needs QEMU with virglrenderer (`host/scripts/05-qemu-10.2.sh`) and a guest Mesa

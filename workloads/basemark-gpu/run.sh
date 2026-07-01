@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# run-basemark.sh — run Basemark GPU from the CLI, no GUI launcher.
+# run.sh — run Basemark GPU from the CLI, no GUI launcher.
 #
 # The Electron `basemarkgpu` app is just a front-end; the real benchmark is the
 # native binary resources/binaries/BasemarkGPU_{vk,gl}, which is a normal CLI
@@ -29,9 +29,9 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")/../lib" && pwd)/common.sh"
 refuse_root
 
 LAYER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
-# Find the extracted Basemark tree (install-basemark-gpu.sh puts it here).
+# Find the extracted Basemark tree (install.sh puts it here).
 APP_ROOT="$(find "$LAYER_DIR/BasemarkGPU" -maxdepth 2 -type d -name 'basemarkgpu-*' 2>/dev/null | head -n1)"
-[[ -z "$APP_ROOT" ]] && { log_err "Basemark not found; run install-basemark-gpu.sh first"; exit 1; }
+[[ -z "$APP_ROOT" ]] && { log_err "Basemark not found; run workloads/basemark-gpu/install.sh first"; exit 1; }
 
 API="vulkan"
 QUALITY="medium"

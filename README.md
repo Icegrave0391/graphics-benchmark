@@ -102,18 +102,16 @@ directory name and in result `run_id`s.
 
 ## Workloads
 
-Workloads are layered so that GPU throughput and transport overhead can be
-measured separately:
+The active workload set is intentionally small and no longer split into L1/L2/L3
+layers:
 
-| Layer | Bound        | Purpose                                   | Tools                              |
-|-------|--------------|-------------------------------------------|------------------------------------|
-| L1    | GPU          | Cross-API standard scene, raw GPU power   | GravityMark                        |
-| L2    | CPU + GPU    | Real-world load (tens of thousands of draw calls/frame) | Basemark GPU, vkmark, glmark2 |
-| L3    | Transport    | Isolate VM command-submission overhead    | vkoverhead (Vk), drawoverhead (GL) |
+| Tool | Purpose | APIs |
+|------|---------|------|
+| Basemark GPU | Primary benchmark workload; mixed CPU/GPU rendering load | Linux: Vulkan/OpenGL; DirectX via Windows build + Proton if needed |
+| GravityMark | Standalone smoke/diagnostic workload for GPU path bring-up | Vulkan/OpenGL (GL requires 4.5) |
 
-Frame metrics are normalized through a single capture layer per OS
-(**MangoHud** on Linux, **PresentMon** on Windows) so FPS/frametime numbers are
-comparable regardless of which benchmark produced them.
+Frame metrics are normalized through a single capture layer per OS (**MangoHud**
+on Linux, **PresentMon** on Windows) so FPS/frametime numbers are comparable.
 
 ## Repository layout
 
@@ -124,12 +122,10 @@ graphics-benchmark/
 ├── environments/                # one directory per matrix row (setup, not benchmarks)
 │   ├── native/{windows,linux}/
 │   └── virtualization/{passthrough,virtio-virgl,virtio-venus,muvm}/
-├── workloads/                   # benchmark tools, grouped by layer
-│   ├── l1-gpu-bound/            # GravityMark
-│   ├── l2-real-world/          # Basemark GPU, vkmark, glmark2
-│   ├── l3-transport/           # vkoverhead, drawoverhead
-│   ├── compute/                # vkpeak
-│   └── capture/                # MangoHud, PresentMon
+├── workloads/                   # benchmark tools
+│   ├── basemark-gpu/           # Basemark GPU install + CLI runner
+│   ├── gravitymark/            # GravityMark install + extracted payload
+│   └── lib/                    # shared workload install helpers
 ├── harness/                    # CLI to schedule runs, wrap capture, emit results
 ├── config/                     # matrix / run configuration
 └── results/                    # exported per-run JSON + raw captures

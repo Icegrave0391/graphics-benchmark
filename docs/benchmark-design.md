@@ -90,96 +90,86 @@ native / passthrough 环境下 API 走原生路径（Windows 原生 DX；Linux D
 
 ## 3. 测量指标
 
-指标按 **三层 workload**（见 §4）分组采集，每次 run 导出统一 JSON（见 §5）。
+当前只保留一个 workload：**Basemark GPU**。不再按 L1/L2/L3 分层组织。
+每次 run 导出统一 JSON（见 §5）。
 
 ### 3.1 通用元数据（每次 run 必采）
-GPU 型号、Mesa/RADV/radeonsi 版本、kernel、QEMU / libkrun / virglrenderer / venus 版本、DXVK/VKD3D 版本、guest OS、分辨率、vsync 状态、context type（virgl/venus/native/passthrough）、env_id。
 
-### 3.2 L1 — GPU 算力层（GravityMark，GPU-bound）
-衡量"虚拟化后 GPU 纯算力是否还在"。预期各虚拟化方案差异小。
+GPU 型号、Mesa/RADV/radeonsi 版本、kernel、QEMU / libkrun / virglrenderer / venus
+版本、DXVK/VKD3D/Proton 版本、guest OS、分辨率、vsync 状态、context type
+（virgl/venus/native/passthrough/muvm）、env_id。
+
+对 Venus 必须额外记录 host Vulkan ICD：`host_vulkan_driver`（例如 `radv` 或
+`amdvlk`）和 `host_vulkan_driver_version`。本项目默认 Venus 走 RADV；在
+Renoir/Cezanne host 上，Ubuntu stock Mesa 的 RADV 会让 host venus decoder
+线程崩溃（`vkr-ring-*` segfault in `libvulkan_radeon.so`），已验证 Mesa
+`26.1.3 - kisak-mesa PPA` 可修复。
+
+### 3.2 Basemark GPU 指标
+
+Basemark GPU 是当前唯一的图形 workload。它覆盖真实游戏式负载（CPU+GPU
+混合、较多 draw call），比纯微基准更接近实际应用。
 
 | 指标 | 说明 |
 |---|---|
-| `score` | GravityMark 总分 |
+| `score` | Basemark 总分 |
 | `fps_avg / fps_min / fps_max` | 帧率 |
-| `frametime_avg_ms / p95 / p99` | 帧时间分布 |
-| `fps_1pct_low / fps_0p1pct_low` | 卡顿 |
-| `asteroids` | 固定对象数（保证跨 run 一致） |
-
-### 3.3 L2 — 真实负载层（Basemark GPU / vkmark / glmark2，CPU+GPU 混合）
-每帧数万 draw call，**包含命令提交路径开销**。是 GPU 算力与 transport 开销的综合体现。
-
-| 指标 | 说明 |
-|---|---|
-| `score` / `fps_avg` | 综合性能 |
-| `frametime_avg_ms / p95 / p99` | 帧时间分布 |
-| `fps_1pct_low / fps_0p1pct_low` | 卡顿一致性 |
+| `frametime_avg_ms / p95 / p99` | 由统一捕获层计算 |
+| `fps_1pct_low / fps_0p1pct_low` | 卡顿指标 |
 | `frametime_stddev_ms` | 帧时间抖动 |
-| `host_cpu_pct` | host 端解码进程 (virglrenderer/venus/QEMU) CPU 占用 |
+| `host_cpu_pct` | host 端解码进程 (QEMU/virglrenderer/venus) CPU 占用 |
 
-### 3.4 L3 — Transport 显微镜层（vkoverhead / drawoverhead，transport-bound）
-专门隔离 **VM transport 的 CPU 提交开销**，是区分 passthrough / Venus / VirGL / muvm 的最关键数据。
+### 3.3 派生指标
 
-| 指标 | 说明 |
-|---|---|
-| `draws_per_second` | 每个 vkoverhead/drawoverhead 用例的吞吐 |
-| `submit_noop_dps` | 空 submit 吞吐 → 纯 transport 往返成本 |
-| `submit_1cmdbuf_dps` / `submit_50cmdbuf_dps` | command buffer 提交成本 |
-| `draw_dps` / `draw_multi_dps` | draw call 提交成本 |
-| `descriptor_*_dps` | 资源绑定提交成本 |
-| `relative_pct` | 相对各类 base case 的百分比（工具原生输出） |
+- `overhead_pct = (baseline - measured) / baseline`，基线为对应 native
+  （`native-windows` / `native-linux`）。
+- 每个 Basemark API × 环境一张对比表，列出各虚拟化方案相对 native 的
+  overhead。
+- 注意 Venus 的 host ICD 必须一致才可做纯 overhead 对比；例如
+  `native-linux-radv` 应对比 `venus-linux-radv`。若使用 `venus-linux-amdvlk`，
+  需要单独建立 `native-linux-amdvlk` 基线。
 
-> vkoverhead 走 Vulkan(→Venus)，drawoverhead 走 GL(→VirGL)，分别量化两条 transport 路径的提交开销。
-
-### 3.5 派生指标（跨环境聚合后计算）
-- `overhead_pct = (baseline - measured) / baseline`，基线为对应 native（`native-windows` / `native-linux`）。
-- 每个 workload × API 一张"环境对比表"，列出各虚拟化方案相对 native 的 overhead。
-- L3 的 `submit_*` overhead 单独成表 —— 这是 transport 方案优劣的核心证据。
-
-> 关键方法论：**所有渲染类 workload（L1/L2）统一用同一帧时间捕获层归一化**（Linux: MangoHud；Windows: PresentMon），避免各 benchmark 自报 FPS 口径不一。L3 工具自带精确计数，直接用其原生 CSV。
+> 关键方法论：所有渲染类 run 统一用 **MangoHud**（Linux）或
+> **PresentMon**（Windows）采集帧时间，避免 Basemark 自报 FPS 与其他环境
+> 口径不一致。
 
 ---
 
-## 4. Workload 选型（三层结构）
+## 4. Workload 选型
 
-原则：**开源/免费 + CLI/headless + 结构化导出 + 跨 API**。避免 3DMark / Unigine Pro（CLI 与 CSV 导出付费、Linux 无 CLI 路径）。
+当前只保留 **Basemark GPU** 作为正式 benchmark。GravityMark 可作为临时
+bring-up 诊断工具保留在仓库中，但不进入正式结果矩阵。移除 vkmark/glmark2、
+vkoverhead、drawoverhead、vkpeak 等分层/补充 workload。原因：当前阶段重点是先用一个
+真实负载跑通环境矩阵和结果采集，避免多 workload 带来的脚本和口径复杂度。
 
-设计核心：单一 workload 无法同时覆盖"GPU 算力"和"transport 开销"，因此分三层，各司其职。
+| 工具 | API | CLI/导出 | 平台 | 状态 |
+|---|---|---|---|---|
+| **Basemark GPU** | Linux: Vulkan/OpenGL; Windows build: D3D12 | Linux 原生 binary 可由 `run.sh` 直接驱动；GUI 仍可手动运行 | Linux（native/guest） | 当前唯一 workload |
 
-| 层 | 目的 / bound | 工具 | API | CLI/导出 | 平台 | 状态 |
-|---|---|---|---|---|---|---|
-| **L1** | 跨 API 标准场景，GPU-bound（比 GPU 纯算力） | **GravityMark** | Vk/D3D12/D3D11/GL | ✅ CLI + 逐帧统计 + 自动退出 | Linux/Win | 先实测 |
-| **L2** | 跨 API 真实负载，CPU+GPU（每帧数万 draw call，含提交开销） | **Basemark GPU** | Win:Vk/DX/GL; Linux:Vk/GL | ⚠️ 需实测 CLI/导出 | Linux/Win | 先实测 |
-| **L2 补充** | 开源替补 / 轻量综合场景 | **vkmark**(Vk) + **glmark2**(GL) | Vk / GL | ✅ headless；glmark2 原生 CSV | Linux | 补充 |
-| **L3** | transport 显微镜，transport-bound（隔离 VM 提交开销） | **vkoverhead**(Vk) + **drawoverhead**(GL,piglit) | Vk / GL | ✅ 原生 CSV，纯 CLI，零依赖 | Linux | 后续 |
-| **计算/带宽** | Vulkan 峰值算力 microbench | **vkpeak** | Vk compute | ✅ 纯 CLI | Linux/Win | 可选 |
-| **捕获层 (Linux)** | 统一帧时间归一化 | **MangoHud** | Vk/GL/DXVK | ✅ CSV（含 1%/0.1% low） | Linux | — |
-| **捕获层 (Windows)** | 统一帧时间归一化 | **PresentMon** | DX/Vk/GL (ETW) | ✅ per-frame CSV | Windows | — |
+### Basemark GPU 已知坑
 
-> 当前阶段：**先实测 L1 (GravityMark) 与 L2 (Basemark GPU)**；L3 (vkoverhead/drawoverhead) 后续加入用于精确归因 transport 开销。
+1. **Linux 版无原生 DX**（仅 GL+Vulkan）。DirectX 在 Linux guest/native 下通过
+   Windows 版 Basemark + Proton/DXVK/VKD3D 跑，后续需要时再恢复 DX 脚本。
+2. **强制联网/Power Board**：GUI free 版会上传结果；CLI runner 默认关闭
+   `ResultUpload`，如需与 GUI 行为一致可显式打开。
+3. **AMD + RADV + 高画质/4K 可能崩**：默认使用 Medium / 非 4K。
+4. **旧 Linux binary 依赖 OpenSSL 1.1**：Ubuntu 24.04 没有 `libssl1.1`，安装脚本
+   从 Ubuntu 20.04 security pocket 安装该兼容库。
+5. **Electron SUID sandbox**：安装脚本修复 `chrome-sandbox` 的 `root:root 4755`。
+6. **License**：仅非商业；禁止把结果发布到带广告网站。内部研究可用。
 
-### 为什么要分三层
-- **L1 GravityMark 是 GPU-driven**（CPU 几乎空闲），命令提交极少 → 测得出 GPU 算力，但**测不出 transport 开销**。
-- **L2 Basemark GPU 是 CPU-driven**（每帧数万 draw call）→ 充分压 virtio/venus 提交路径，体现真实游戏式负载。L1 与 L2 互补。
-- **L3 vkoverhead/drawoverhead** 用百万级 draw/submit 把 transport 往返成本放大成可测信号 → 干净隔离 passthrough vs Venus vs VirGL vs muvm 的提交开销差异。这是整个对比里最有信息量的数据。
+### 推荐命令
 
-### 跨 API 转译组件（非 benchmark 本身）
-- **DXVK**（D3D9/10/11→Vulkan）、**VKD3D-Proton**（D3D12→Vulkan）：DX workload 在 Linux/虚拟化下的唯一途径，按路由走到 Venus / native ctx。
-- 按 §2.1 路由，**不使用 Zink / ANGLE 做交叉转译**（GL 一律走 VirGL，保持路径干净）。
+```sh
+# 安装（host 或 Linux guest）
+workloads/basemark-gpu/install.sh
 
-### Basemark GPU 已知坑（来自调研，实测时验证）
-1. **Linux 版无原生 DX**（仅 GL+Vulkan）；DX 仅 Windows 版。
-2. **强制联网**：free 版每次跑都上传 Power Board，断网无法运行 → 隔离 VM 需保证 guest 联网。
-3. **AMD + RADV + 高画质/4K 会崩**（drm fence timeout 锁屏）→ 用 Medium 画质或非 4K，或改用 AMDVLK。
-4. **CLI/导出能力待实测**：可能偏 GUI 驱动，需确认能否脚本化与结构化导出；若不行则以 vkmark/glmark2 替补 L2。
-5. **License**：仅非商业；禁止把结果发布到带广告网站。内部研究可用。
+# Vulkan（Venus / native Vulkan）
+DISPLAY=:0 workloads/basemark-gpu/run.sh --api vulkan --quality medium --res 1280x720
 
-### 推荐命令（占位，实测后锁定参数）
-- L1: `GravityMark --api {vulkan|d3d12|d3d11|opengl} --preset <fixed> --asteroids <N> -benchmark -close`
-- L2: `Basemark GPU`（实测 CLI；替补 `vkmark -b <scenes> --winsys headless` / `glmark2 -b <scenes> --off-screen --results-file r.csv`）
-- L3: `vkoverhead -duration 5`（CSV）、piglit `drawoverhead`
-- 计算: `vkpeak <dev_id>`
-- 捕获: Linux `MANGOHUD_CONFIG=output_folder=...,fps_only=0` + `mangohud --dlsym <cmd>`；Windows `PresentMon -process_name <exe> -output_file r.csv`
+# OpenGL（VirGL / native GL）
+DISPLAY=:0 workloads/basemark-gpu/run.sh --api gl --quality medium --res 1280x720
+```
 
 ---
 
@@ -189,7 +179,7 @@ GPU 型号、Mesa/RADV/radeonsi 版本、kernel、QEMU / libkrun / virglrenderer
 
 ```json
 {
-  "run_id": "2026-06-29T12:00:00Z_venus-linux_L1_gravitymark_vulkan",
+  "run_id": "2026-06-29T12:00:00Z_venus-linux_basemark_gpu_vulkan",
   "env": {
     "env_id": "venus-linux",
     "category": "virtualization",
@@ -205,10 +195,9 @@ GPU 型号、Mesa/RADV/radeonsi 版本、kernel、QEMU / libkrun / virglrenderer
     "dxvk_version": null, "vkd3d_version": null
   },
   "workload": {
-    "layer": "L1",
-    "tool": "gravitymark", "api": "vulkan",
-    "scene": "asteroids", "asteroids": 200000,
-    "resolution": "1920x1080", "vsync": false, "duration_s": 30
+    "tool": "basemark-gpu", "api": "vulkan",
+    "scene": "official", "quality": "medium",
+    "resolution": "1280x720", "vsync": false, "duration_s": 90
   },
   "metrics": {
     "score": 0,
@@ -222,36 +211,30 @@ GPU 型号、Mesa/RADV/radeonsi 版本、kernel、QEMU / libkrun / virglrenderer
   },
   "derived": { "baseline_id": "native-linux", "overhead_pct": null },
   "capture_layer": "mangohud",
-  "raw_capture": "captures/venus-linux_L1_gravitymark_vulkan.csv"
+  "raw_capture": "captures/venus-linux_basemark_gpu_vulkan.csv"
 }
 ```
 
-> 字段说明：`env_id` 见 §2 矩阵；`category` ∈ {native,virtualization}；`layer` ∈ {L1,L2,L3}；`transport` ∈ {native,passthrough,virgl,venus,muvm}；L3 run 的 `metrics` 用 `draws_per_second` 系列（submit_noop / submit_1cmdbuf / draw 等按用例名展开），`score`/`fps_*` 留空。
+> 字段说明：`env_id` 见 §2 矩阵；`category` ∈ {native,virtualization}；`transport` ∈ {native,passthrough,virgl,venus,muvm}。当前 schema 不再包含 workload layer。
 
 ---
 
 ## 6. 已知风险 / 待验证
 
-- **`venus-windows` 已从矩阵移除（virtio-gpu 在 Windows guest 上无 3D）**：在 Linux host + Windows guest 组合下，virtio-gpu **没有可用的 3D 客户端驱动**。官方 virtio-win 提供的 Windows GPU 驱动（`viogpudo`）是 *display-only*（仅 2D/framebuffer），不提供 OpenGL/Vulkan/DirectX 硬件路径——这是架构性限制，与 virtio-win 版本无关（最新 0.1.285 仍只有 viogpudo）。后果：Windows guest 里任何 3D workload（DX/GL/Vulkan）都会回退到 **软件渲染**（DirectX→WARP、GL→GDI 1.1），host GPU 完全不参与，测不出真实性能（实测：`dxdiag` 显示 `Direct3D 0/4`，GpuTest/Basemark 直接闪退）。
-  - 社区现状（追踪用）：virtio-win issue [#773](https://github.com/virtio-win/kvm-guest-drivers-windows/issues/773)（请求完整 3D 驱动，多年未实现）、[#841](https://github.com/virtio-win/kvm-guest-drivers-windows/issues/841)、PR [#943](https://github.com/virtio-win/kvm-guest-drivers-windows/pull/943)（viogpu3d：virgl+D3D10，黑屏/BSOD、未合并、判为死路）。基于 Venus(Vulkan)+VKD3D 的新驱动（anonymix007）号称"接近发布"但**尚未正式发布**。
-  - 结论：**Windows 的虚拟化图形只用 `pt-windows`（passthrough，原生 AMD Windows 驱动 + 原生 DX）**。virtio 路径（VirGL/Venus）只在 Linux guest 上测。若将来 Windows Venus guest 驱动成熟发布，可重新评估加入 `venus-windows`。
-- **muvm 仅 Linux guest**：无 Windows 路径（drm native context 是 Linux UAPI）。
-- **Basemark GPU**：见 §4 已知坑（Linux 无原生 DX、强制联网、AMD+RADV 高画质崩溃、CLI/导出待实测、非商业 license）。若 CLI/导出不可用，L2 改用 vkmark + glmark2。
-- **L1 GravityMark CPU-free**：测不到 transport 提交开销，须靠 L3 (vkoverhead/drawoverhead) 补齐归因。
-- **路径干净性**：按 §2.1，GL→VirGL、VK→Venus、DX→DXVK(over Venus)，不做交叉转译，避免混淆开销来源。
-- **MangoHud CSV 列格式随版本变化**：需在目标版本上锁定列定义；默认采样可能偏粗，需开启 per-frame frametime 日志。
-- **Windows guest 帧捕获**：用 PresentMon（ETW，API 无关），与 Linux 的 MangoHud 口径需做一次校准对齐。仅用于 `native-windows` / `pt-windows`。
+- **`venus-windows` 已从矩阵移除（virtio-gpu 在 Windows guest 上无 3D）**：在 Linux host + Windows guest 组合下，virtio-gpu **没有可用的 3D 客户端驱动**。官方 virtio-win 提供的 Windows GPU 驱动（`viogpudo`）是 *display-only*（仅 2D/framebuffer），不提供 OpenGL/Vulkan/DirectX 硬件路径。
+- **Basemark GPU Linux 版**：Linux 无原生 DX；旧 native renderer 依赖 OpenSSL 1.1；GUI free 版会上传 Power Board；高画质/4K 在 AMD/RADV 上可能不稳定，因此默认 Medium / 非 4K。
+- **VirGL OpenGL 版本限制**：当前 Linux guest 的 VirGL 暴露 OpenGL 4.3；Basemark GPU 的部分 GL 路径可能要求 OpenGL 4.5，不应假设所有 GL workload 都能在 VirGL 上运行。
+- **Venus host RADV 版本敏感**：Ubuntu stock Mesa 在 Renoir/Cezanne host 上可导致 `vkr-ring-*` 在 `libvulkan_radeon.so` 中崩溃。已验证 kisak Mesa 26.1.3 的 RADV 可跑通 Venus Vulkan workload。
 - **公平性控制**：固定分辨率、关 vsync、锁 GPU/内存时钟（避免 boost 抖动）、固定 guest vCPU/内存、预热后再采样、每配置多次取中位数。
 
 ---
 
 ## 7. 建议的执行顺序
 
-阶段一（当前）：跑通 L1 + L2，验证 harness 与基线。
-1. `native-linux` — 基线 + harness 验证（L1 GravityMark、L2 Basemark/vkmark/glmark2）。
-2. `pt-linux` — 虚拟化上限。
-3. `venus-linux` 与 `muvm-linux` — 核心对比（VK + DX via DXVK）。
-4. `virgl-linux` — 仅 GL。
-5. Windows 侧 `native-windows` / `pt-windows` — 原生 DX 对照（Windows 唯一的虚拟化图形路径是 `pt-windows`；virtio 路径仅 Linux，见 §6）。
+当前阶段只围绕 Basemark GPU 建立基线和虚拟化对比：
 
-阶段二：加入 L3 (vkoverhead/drawoverhead)，对上述每个环境精确量化 transport 提交开销。
+1. `native-linux` — Basemark GPU Vulkan/OpenGL 基线。
+2. `venus-linux` — Basemark GPU Vulkan（必要时通过 host RADV/kisak Mesa 修复）。
+3. `virgl-linux` — Basemark GPU OpenGL（受 VirGL GL 4.3 能力限制，若不可运行需标注跳过）。
+4. `muvm-linux` / `pt-linux` — Basemark GPU Vulkan/OpenGL 对比。
+5. Windows 侧仅保留 `native-windows` / `pt-windows`，用于原生 DX 对照；本 repo 不支持 Windows guest 上的 virtio 图形路径。

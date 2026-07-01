@@ -11,14 +11,12 @@
 #   * Self-contained payloads (GravityMark .run extracted, Basemark .tar.gz
 #     extracted) — prepared here in WL_DOWNLOAD_ONLY mode (host only downloads +
 #     extracts, installs NOTHING system-wide, stays clean) and copied in.
-#   * apt/dpkg deps (vkmark, glmark2, msitools, X libs, libssl1.1) — installed by
-#     the guest's cloud-init (see cloud-init/user-data). Build the disk first
-#     with create-vmdisk.sh so those are already present.
+#   * apt/dpkg deps (X libs, libssl1.1) — installed by the guest's cloud-init
+#     (see cloud-init/user-data). Build the disk first with create-vmdisk.sh so
+#     those are already present.
 #   * chrome-sandbox SUID fix for Basemark — applied here via virt-customize.
 #
-# Scope: L1 GravityMark + L2 Basemark (the extract-and-run tools). vkmark/glmark2
-# are pure-apt (cloud-init). The DX/Proton tools are not provisioned this way
-# (Basemark-DX must install inside a Proton prefix in the guest).
+# Scope: GravityMark + Basemark GPU only.
 #
 # Linux guest only (this repo does not support a Windows guest).
 #
@@ -76,13 +74,13 @@ fi
 # ---------------------------------------------------------------------------
 log_info "==> Preparing workload tools on the host (download + extract only)"
 export WL_DOWNLOAD_ONLY=1
-"$WORKLOADS_DIR/l1-gpu-bound/install-gravitymark.sh"
-"$WORKLOADS_DIR/l2-real-world/install-basemark-gpu.sh"
+"$WORKLOADS_DIR/gravitymark/install.sh"
+"$WORKLOADS_DIR/basemark-gpu/install.sh"
 
 # What to copy in: the extracted tool trees + the runner scripts + lib. We avoid
 # copying the big .cache/ (raw installers) since the extracted trees suffice.
-GM_DIR="$WORKLOADS_DIR/l1-gpu-bound/GravityMark"
-BMK_DIR="$WORKLOADS_DIR/l2-real-world/BasemarkGPU"
+GM_DIR="$WORKLOADS_DIR/gravitymark/GravityMark"
+BMK_DIR="$WORKLOADS_DIR/basemark-gpu/BasemarkGPU"
 [[ -d "$GM_DIR" ]]  || { log_err "GravityMark not extracted: $GM_DIR"; exit 1; }
 [[ -d "$BMK_DIR" ]] || { log_err "Basemark not extracted: $BMK_DIR"; exit 1; }
 
@@ -128,13 +126,11 @@ Workloads baked into: $VMDISK
 Inside the guest they live at:
     ${GUEST_DEST}/workloads
 
-apt deps (vkmark, glmark2, msitools, X libs, libssl1.1) come from cloud-init —
+apt deps (X libs, libssl1.1) come from cloud-init —
 make sure the disk was built with the updated create-vmdisk.sh.
 
 Boot and run (onscreen needs the desktop session / DISPLAY=:0):
     ./start-vm.sh --gui
-    ./ssh-vm.sh -- 'DISPLAY=:0 ${GUEST_DEST}/workloads/l1-gpu-bound/GravityMark/run_windowed_vk.sh -asteroids 200000 -benchmark 1 -close 1'
-    ./ssh-vm.sh -- 'DISPLAY=:0 ${GUEST_DEST}/workloads/l2-real-world/run-basemark.sh --api vulkan'
-    ./ssh-vm.sh -- 'vkmark --winsys headless'
-    ./ssh-vm.sh -- 'DISPLAY=:0 glmark2 --off-screen'
+    ./ssh-vm.sh -- 'DISPLAY=:0 ${GUEST_DEST}/workloads/gravitymark/GravityMark/run_windowed_vk.sh -asteroids 200000 -benchmark 1 -close 1'
+    ./ssh-vm.sh -- 'DISPLAY=:0 ${GUEST_DEST}/workloads/basemark-gpu/run.sh --api vulkan'
 EOF
