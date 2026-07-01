@@ -49,14 +49,38 @@ need_cmd umu-run
 log_info "==> DX run via Proton"
 log_info "    exe     : $EXE_ABS"
 log_info "    prefix  : $PROTON_PREFIX"
-log_info "    proton  : ${PROTONPATH:-UMU-Proton (official)}"
+DEFAULT_PROTONPATH="${XDG_DATA_HOME:-$HOME/.local/share}/umu/compatibilitytools/UMU-Proton"
+log_info "    proton  : ${PROTONPATH:-$DEFAULT_PROTONPATH}"
 log_info "    mangohud: $([[ $USE_MANGOHUD == 1 ]] && echo on || echo off)"
+
+# When launched from an SSH/remote terminal into a local GNOME Wayland session,
+# DISPLAY may be set manually (e.g. DISPLAY=:0) but XAUTHORITY is often missing.
+# Xwayland then rejects the app with "Authorization required". Infer the common
+# GNOME Xwayland auth file so Proton/DXVK can create the benchmark window.
+if [[ -n "${DISPLAY:-}" && -z "${XAUTHORITY:-}" ]]; then
+  for auth in "${XDG_RUNTIME_DIR:-/run/user/$UID}"/.mutter-Xwaylandauth.* "$HOME/.Xauthority"; do
+    if [[ -r "$auth" ]]; then
+      export XAUTHORITY="$auth"
+      log_info "    xauth   : $XAUTHORITY"
+      break
+    fi
+  done
+fi
 
 mkdir -p "$PROTON_PREFIX"
 
 run_umu() {
-  WINEPREFIX="$PROTON_PREFIX" GAMEID="$GAMEID" STORE="$STORE" \
-    ${PROTONPATH:+PROTONPATH="$PROTONPATH"} \
+  local proton_env="${PROTONPATH:-$DEFAULT_PROTONPATH}"
+  [[ -f "$proton_env/toolmanifest.vdf" ]] || {
+    log_err "Proton runtime not found or incomplete: $proton_env"
+    log_err "Run workloads/proton/install.sh first."
+    return 1
+  }
+  env \
+    WINEPREFIX="$PROTON_PREFIX" \
+    GAMEID="$GAMEID" \
+    STORE="$STORE" \
+    PROTONPATH="$proton_env" \
     umu-run "$EXE_ABS" "$@"
 }
 
