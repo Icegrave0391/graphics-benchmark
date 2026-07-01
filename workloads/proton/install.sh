@@ -29,6 +29,7 @@
 #
 # Run as your normal user (NOT root). Env overrides:
 #   UMU_VERSION   umu-launcher release tag (default 1.4.0)
+#   UMU_PROTON_VERSION  UMU-Proton release to cache/install (default 10.0-4)
 #   PROTON_PREFIX wine prefix to create (default workloads/proton/prefix)
 #   WL_NO_PRIME=1 skip the priming run (download Proton lazily on first use)
 
@@ -37,6 +38,7 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")/../lib" && pwd)/common.sh"
 refuse_root
 
 UMU_VERSION="${UMU_VERSION:-1.4.0}"
+UMU_PROTON_VERSION="${UMU_PROTON_VERSION:-10.0-4}"
 LAYER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 PROTON_PREFIX="${PROTON_PREFIX:-$LAYER_DIR/prefix}"
 VERSIONS_FILE="$LAYER_DIR/versions.txt"
@@ -44,6 +46,11 @@ VERSIONS_FILE="$LAYER_DIR/versions.txt"
 UMU_BASE="https://github.com/Open-Wine-Components/umu-launcher/releases/download/${UMU_VERSION}"
 UMU_DEB1="python3-umu-launcher_${UMU_VERSION}-1_amd64_ubuntu-noble.deb"
 UMU_DEB2="umu-launcher_${UMU_VERSION}-1_all_ubuntu-noble.deb"
+
+UMU_PROTON_TAG="UMU-Proton-${UMU_PROTON_VERSION}"
+UMU_PROTON_TGZ="${UMU_PROTON_TAG}.tar.gz"
+UMU_PROTON_BASE="https://github.com/Open-Wine-Components/umu-proton/releases/download/${UMU_PROTON_TAG}"
+UMU_COMPAT_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/umu/compatibilitytools"
 
 log_info "==> Installing DirectX runtime: umu-launcher ${UMU_VERSION} + Proton"
 
@@ -74,6 +81,23 @@ if ! command -v umu-run >/dev/null 2>&1; then
   log_err "umu-run not on PATH after install"; exit 1
 fi
 
+log_info "==> Ensuring UMU-Proton ${UMU_PROTON_VERSION} is cached locally"
+if [[ ! -d "$UMU_COMPAT_DIR/UMU-Proton" && ! -d "$UMU_COMPAT_DIR/$UMU_PROTON_TAG" ]]; then
+  download "$UMU_PROTON_BASE/$UMU_PROTON_TGZ" "$WL_CACHE/$UMU_PROTON_TGZ"
+  mkdir -p "$UMU_COMPAT_DIR"
+  tmp_extract="$(mktemp -d)"
+  trap 'rm -rf "$tmp_extract"' EXIT
+  tar -xf "$WL_CACHE/$UMU_PROTON_TGZ" -C "$tmp_extract"
+  proton_root="$(find "$tmp_extract" -mindepth 1 -maxdepth 1 -type d | head -n1)"
+  [[ -n "$proton_root" ]] || { log_err "UMU-Proton tarball did not contain a directory"; exit 1; }
+  rm -rf "$UMU_COMPAT_DIR/UMU-Proton" "$UMU_COMPAT_DIR/$UMU_PROTON_TAG"
+  mv "$proton_root" "$UMU_COMPAT_DIR/UMU-Proton"
+else
+  log_info "==> UMU-Proton already installed under $UMU_COMPAT_DIR"
+fi
+
+export PROTONPATH="${PROTONPATH:-UMU-Proton}"
+
 mkdir -p "$PROTON_PREFIX"
 
 if [[ "${WL_NO_PRIME:-0}" == "1" ]]; then
@@ -81,6 +105,7 @@ if [[ "${WL_NO_PRIME:-0}" == "1" ]]; then
 else
   log_info "==> Priming Proton/runtime (first download; needs network)..."
   WINEPREFIX="$PROTON_PREFIX" GAMEID="umu-default" STORE="none" \
+    PROTONPATH="$PROTONPATH" \
     umu-run wineboot --init || log_warn "prime run returned non-zero (often OK)"
 fi
 
@@ -88,6 +113,7 @@ log_info "==> Recording Proton / DXVK / VKD3D versions -> $VERSIONS_FILE"
 {
   echo "# DX runtime versions (auto-recorded $(date -u +%FT%TZ))"
   echo "umu_launcher=${UMU_VERSION}"
+  echo "umu_proton=${UMU_PROTON_VERSION}"
   PROTON_DIR="$(find "$HOME/.local/share" -maxdepth 3 -type f -name version 2>/dev/null \
                   -path '*roton*' | head -n1)"
   if [[ -n "$PROTON_DIR" ]]; then

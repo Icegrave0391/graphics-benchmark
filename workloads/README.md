@@ -113,8 +113,11 @@ the vendor's **Windows** build through **Proton** (DXVK → Vulkan for D3D11,
 VKD3D-Proton → Vulkan for D3D12). On `venus-linux` that Vulkan runs on the host
 through Venus, so DX shares the Venus transport with native Vulkan.
 
-First install the shared Proton runtime (umu-launcher + Proton). First run needs
-network to download Proton and the Steam Runtime:
+First install the shared Proton runtime (umu-launcher + Proton). The installer
+downloads the umu-launcher `.deb`s and a fixed UMU-Proton tarball into
+`workloads/.cache/`, extracts UMU-Proton to `~/.local/share/umu/compatibilitytools`,
+then primes the prefix. First run can still need network for Steam Runtime data,
+but the large Proton download is cached by this script:
 
 ```sh
 workloads/proton/install.sh
