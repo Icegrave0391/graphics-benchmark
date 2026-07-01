@@ -107,8 +107,12 @@ layers:
 
 | Tool | Purpose | APIs |
 |------|---------|------|
-| Basemark GPU | Primary benchmark workload; mixed CPU/GPU rendering load | Linux: Vulkan/OpenGL; DirectX via Windows build + Proton if needed |
-| GravityMark | Standalone smoke/diagnostic workload for GPU path bring-up | Vulkan/OpenGL (GL requires 4.5) |
+| Basemark GPU | Primary benchmark workload; mixed CPU/GPU rendering load | Linux: Vulkan/OpenGL; DirectX 12 via Windows build + Proton |
+| GravityMark | Diagnostic / comparison workload for GPU path bring-up | Vulkan/OpenGL; DirectX 11/12 via Windows build + Proton |
+
+Each workload also ships a **DirectX variant** that runs the vendor's Windows
+build through **Proton** (DXVK for D3D11, VKD3D-Proton for D3D12). On
+`venus-linux` that DX → Vulkan output runs on the host through Venus.
 
 Frame metrics are normalized through a single capture layer per OS (**MangoHud**
 on Linux, **PresentMon** on Windows) so FPS/frametime numbers are comparable.
@@ -123,8 +127,9 @@ graphics-benchmark/
 │   ├── native/{windows,linux}/
 │   └── virtualization/{passthrough,virtio-virgl,virtio-venus,muvm}/
 ├── workloads/                   # benchmark tools
-│   ├── basemark-gpu/           # Basemark GPU install + CLI runner
-│   ├── gravitymark/            # GravityMark install + extracted payload
+│   ├── proton/                 # shared DirectX-via-Proton runtime (umu + Proton)
+│   ├── basemark-gpu/           # Basemark GPU: Linux runner + dx/ (DirectX 12)
+│   ├── gravitymark/            # GravityMark: Linux runner + dx/ (DirectX 11/12)
 │   └── lib/                    # shared workload install helpers
 ├── harness/                    # CLI to schedule runs, wrap capture, emit results
 ├── config/                     # matrix / run configuration

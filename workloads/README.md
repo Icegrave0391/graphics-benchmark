@@ -7,6 +7,12 @@ no longer grouped into L1/L2/L3 layers. The active set is intentionally small:
 - **GravityMark** — retained as a standalone smoke/diagnostic workload for
   Vulkan/OpenGL bring-up.
 
+Each of the two also has a **DirectX variant** that runs the vendor's *Windows*
+build through **Proton** (DXVK for D3D11, VKD3D-Proton for D3D12). On
+`venus-linux` this DX → Vulkan output runs on the host through Venus, so DX can
+be measured on the same transport as native Vulkan. The Proton runtime is shared
+between both DX variants.
+
 Both install scripts use precompiled upstream binaries; no workload is built from
 source. The same scripts run on `native-linux` and the Linux guest.
 
@@ -15,15 +21,25 @@ source. The same scripts run on `native-linux` and the Linux guest.
 ```
 workloads/
 ├── lib/common.sh            # shared install/download/extract helpers
+├── proton/                  # shared DirectX-via-Proton runtime (umu-launcher + Proton)
+│   ├── install.sh           # installs umu-launcher, primes Proton, records versions
+│   └── run.sh               # runs a Windows .exe through Proton (DXVK/VKD3D)
 ├── basemark-gpu/
-│   ├── install.sh           # downloads/extracts Basemark GPU Linux tarball
-│   └── run.sh               # CLI runner for BasemarkGPU_vk / BasemarkGPU_gl
+│   ├── install.sh           # Linux Basemark GPU (Vulkan/OpenGL)
+│   ├── run.sh               # CLI runner for BasemarkGPU_vk / BasemarkGPU_gl
+│   └── dx/                  # Windows Basemark GPU (DirectX 12) via Proton
+│       ├── install.sh
+│       └── run.sh
 └── gravitymark/
-    └── install.sh           # downloads/extracts GravityMark Linux .run
+    ├── install.sh           # Linux GravityMark (Vulkan/OpenGL)
+    └── dx/                  # Windows GravityMark (D3D11/D3D12) via Proton
+        ├── install.sh
+        └── run.sh
 ```
 
 Downloaded installers are cached under `workloads/.cache/` and extracted payloads
-live under the respective workload directory. Both are git-ignored.
+live under the respective workload directory. The Proton wine prefix lives under
+`workloads/proton/prefix/`. All are git-ignored.
 
 ## Install
 
@@ -89,3 +105,41 @@ DISPLAY=:0 "$GM/run_windowed_vk.sh" -width 1280 -height 720 -asteroids 10000 -be
 
 The OpenGL backend requires OpenGL 4.5 and is not expected to run on VirGL, which
 currently exposes OpenGL 4.3 in the Linux guest.
+
+## DirectX via Proton (venus-linux)
+
+DirectX has no native Linux backend. To measure DX under virtualization we run
+the vendor's **Windows** build through **Proton** (DXVK → Vulkan for D3D11,
+VKD3D-Proton → Vulkan for D3D12). On `venus-linux` that Vulkan runs on the host
+through Venus, so DX shares the Venus transport with native Vulkan.
+
+First install the shared Proton runtime (umu-launcher + Proton). First run needs
+network to download Proton and the Steam Runtime:
+
+```sh
+workloads/proton/install.sh
+```
+
+Then install and run each DX workload:
+
+```sh
+# GravityMark DX (fully scriptable): unpacks the Windows .msi with msitools
+workloads/gravitymark/dx/install.sh
+DISPLAY=:0 workloads/gravitymark/dx/run.sh --d3d11            # DXVK
+DISPLAY=:0 workloads/gravitymark/dx/run.sh --d3d12            # VKD3D-Proton
+DISPLAY=:0 workloads/gravitymark/dx/run.sh --d3d11 --mangohud
+
+# Basemark GPU DX (GUI installer/launcher): installs into the Proton prefix
+workloads/basemark-gpu/dx/install.sh
+DISPLAY=:0 workloads/basemark-gpu/dx/run.sh                   # pick DirectX 12 in the launcher
+```
+
+Notes:
+
+- Start the venus VM with the default RADV host ICD (see
+  `environments/virtualization/virtio-venus/linux-guest/start.sh`); Venus over
+  RADV was verified working after the host RADV/kisak Mesa fix.
+- `workloads/proton/versions.txt` records the resolved Proton / DXVK / VKD3D
+  versions for run metadata.
+- `--mangohud` wraps the run in MangoHud (forwarded into the Steam Runtime
+  container) for a consistent frametime source.

@@ -9,8 +9,13 @@ captures/
 # Workload tool downloads + extracted/installed payloads (large, non-redistributable)
 workloads/.cache/
 workloads/gravitymark/GravityMark/
+workloads/gravitymark/dx/GravityMark-win/
 workloads/basemark-gpu/BasemarkGPU/
 workloads/basemark-gpu/captures/
+# DirectX-via-Proton runtime: wine prefix, captures, recorded versions
+workloads/proton/prefix/
+workloads/proton/captures/
+workloads/proton/versions.txt
 
 # Editor / OS
 *.swp
