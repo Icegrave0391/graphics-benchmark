@@ -56,6 +56,9 @@ DEFAULT_PROTONPATH="$UMU_COMPAT_DIR/UMU-Proton"
 
 log_info "==> Installing DirectX runtime: umu-launcher ${UMU_VERSION} + Proton"
 
+# Add arch
+sudo dpkg --add-architecture i386
+
 # Base deps. umu pulls the Steam Runtime container; it needs these at runtime.
 apt_install \
   python3 python3-xlib python3-filelock \
