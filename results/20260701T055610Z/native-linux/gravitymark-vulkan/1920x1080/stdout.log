@@ -1,0 +1,54 @@
+M:      0 us: ../data.zip: 313 files
+M:   2.93 ms: Temporal antialiasing
+M:   2.97 ms: Render Statistics
+M:   2.99 ms: No Vertical synchronization
+M:  20.65 ms: Build Date: Jun 20 2025
+M:  20.70 ms: Build Info: version=20250429; linux; x64; release; vk=1; gl=45; gles=32; cu=1; fusion
+M:  20.72 ms: Build Version: 1.89
+M:  53.85 ms: Name: LENOVO 20XF0048CD 20XF0048CD
+M:  53.89 ms: System: Ubuntu 24.04.4 LTS
+M:  53.91 ms: Kernel: Linux 6.17.0-35-generic x86_64
+M:  53.93 ms: Memory: 14.46 GB
+M:  53.96 ms: Uptime: 1 day 19:42
+M:  53.98 ms: CPU: AMD Ryzen 7 PRO 5850U with Radeon Graphics
+M:  54.01 ms: GPU: [AMD/ATI] Cezanne [Radeon Vega Series / Radeon Vega Mobile Series] (rev d1)
+M:  54.04 ms: Device: VEN_1002&DEV_1638&SUBSYS_509517AA
+M:  54.06 ms: Memory: 1.00 GB
+M:  55.26 ms: Desktop: 5760x2160 1.0
+M:  55.31 ms: Screen 0: 1920x1080 0 0 eDP-1
+M:  55.32 ms: Screen 1: 3840x2160 1920 0 DP-1
+M:  55.77 ms: Creating 1920x1080 Vulkan Window
+M: 229.49 ms: Using Fetch Mode
+M: 495.14 ms: Device: AMD Radeon Graphics
+M: 495.27 ms: Vendor: AMD
+M: 495.30 ms: Version: 2.0.285
+M: 495.31 ms: DeviceID: 0x1638
+M: 495.74 ms: Group Memory: 32.00 KB
+M: 495.78 ms: Video Memory: 1.00 GB
+M: 495.79 ms: Max Uniform Size: 4.00 GB
+M: 495.81 ms: Max Storage Size: 4.00 GB
+M: 495.83 ms: Creating SceneManager
+M: 875.90 ms: Creating RenderManager
+M:   1.094 s: Rasterization Mode
+M:   1.094 s: Creating Scene
+M:   3.497 s: Creating 200,000 Asteroids
+M:   3.764 s: Updating Scene
+M:   5.451 s: GravityMark 1.89 Vulkan is Ready in 5.4 s
+M:   5.451 s: Starting 1920x1080 Vulkan Benchmark
+M:   5.451 s: Close when finished
+M:   5.451 s: Times: /home/chuqi/GitHub/graphics-benchmark/results/20260701T055610Z/native-linux/gravitymark-vulkan/1920x1080/times.txt
+M:   5.451 s: Count: 1
+M:   5.459 s: Resizing 1920x1080 frame
+M:  2:52.870: Benchmark Finished
+M:  2:52.878: Times: /home/chuqi/GitHub/graphics-benchmark/results/20260701T055610Z/native-linux/gravitymark-vulkan/1920x1080/times.txt
+M:  2:52.878: AMD Radeon Graphics
+M:  2:52.878: API: Vulkan
+M:  2:52.878: Platform: Linux
+M:  2:52.878: Resolution: 1920x1080
+M:  2:52.878: Antialiasing: Temporal
+M:  2:52.878: Asteroids: 200,000
+M:  2:52.878: Score: 1511
+M:  2:52.878: Time: 167.4 s
+M:  2:52.878: FPS: 9.0
+M:  2:53.153: Clearing Scene
+M:  2:53.563: GravityMark 1.89 Done

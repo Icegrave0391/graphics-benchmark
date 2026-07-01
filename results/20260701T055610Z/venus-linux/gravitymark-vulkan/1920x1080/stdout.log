@@ -1,0 +1,51 @@
+M:      0 us: ../data.zip: 313 files
+M:   2.40 ms: Temporal antialiasing
+M:   2.45 ms: Render Statistics
+M:   2.51 ms: No Vertical synchronization
+M:  28.37 ms: Build Date: Jun 20 2025
+M:  28.43 ms: Build Info: version=20250429; linux; x64; release; vk=1; gl=45; gles=32; cu=1; fusion
+M:  28.45 ms: Build Version: 1.89
+M:  64.40 ms: Name: Standard PC (Q35 + ICH9, 2009)
+M:  64.52 ms: System: Ubuntu 24.04.4 LTS
+M:  64.55 ms: Kernel: Linux 6.8.0-124-generic x86_64
+M:  64.57 ms: Memory: 7.75 GB
+M:  64.59 ms: Uptime: 12 m 49 s
+M:  64.62 ms: CPU: AMD Ryzen 7 PRO 5850U with Radeon Graphics
+M:  64.64 ms: Device: VEN_1AF4&DEV_1050&SUBSYS_11001AF4
+M:  70.75 ms: Desktop: 2712x1886 1.0
+M:  71.17 ms: Screen 0: 2712x1886 0 0 Virtual-1
+M:  71.31 ms: Creating 1920x1080 Vulkan Window
+M: 317.80 ms: Using Fetch Mode
+M: 606.52 ms: Device: Virtio-GPU Venus (AMD Radeon Graphics (RADV RENOIR))
+M: 606.67 ms: Vendor: AMD
+M: 606.70 ms: Version: 25.2.8
+M: 606.71 ms: DeviceID: 0x1638
+M: 606.76 ms: Group Memory: 64.00 KB
+M: 606.77 ms: Video Memory: 5.49 GB
+M: 606.79 ms: Max Uniform Size: 4.00 GB
+M: 606.80 ms: Max Storage Size: 4.00 GB
+M: 606.82 ms: Creating SceneManager
+M:   1.610 s: Creating RenderManager
+M:   2.323 s: Rasterization Mode
+M:   2.323 s: Creating Scene
+M:   5.671 s: Creating 200,000 Asteroids
+M:   6.586 s: Updating Scene
+M:  10.095 s: GravityMark 1.89 Vulkan is Ready in 10.1 s
+M:  10.095 s: Starting 1920x1080 Vulkan Benchmark
+M:  10.095 s: Close when finished
+M:  10.095 s: Times: /tmp/graphics-benchmark-results/20260701T055610Z/venus-vulkan/1920x1080/times.txt
+M:  10.095 s: Count: 1
+M:  10.132 s: Resizing 1920x1080 frame
+M:  2:57.575: Benchmark Finished
+M:  2:57.581: Times: /tmp/graphics-benchmark-results/20260701T055610Z/venus-vulkan/1920x1080/times.txt
+M:  2:57.581: Virtio-GPU Venus (AMD Radeon Graphics (RADV RENOIR))
+M:  2:57.581: API: Vulkan
+M:  2:57.581: Platform: Linux
+M:  2:57.581: Resolution: 1920x1080
+M:  2:57.581: Antialiasing: Temporal
+M:  2:57.581: Asteroids: 200,000
+M:  2:57.581: Score: 1374
+M:  2:57.581: Time: 167.4 s
+M:  2:57.581: FPS: 8.2
+M:  2:57.591: Clearing Scene
+M:  2:57.992: GravityMark 1.89 Done

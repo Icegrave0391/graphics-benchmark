@@ -1,0 +1,42 @@
+[0;32m==> GravityMark DX: -direct3d11 (asteroids=200000, 1920x1080)[0m
+[0;32m==> DX run via Proton[0m
+[0;32m    exe     : /home/user/graphics-benchmark/workloads/gravitymark/dx/GravityMark-win/GravityMark/bin/GravityMark.exe[0m
+[0;32m    prefix  : /home/user/graphics-benchmark/workloads/proton/prefix[0m
+[0;32m    proton  : /home/user/.local/share/umu/compatibilitytools/UMU-Proton[0m
+[0;32m    mangohud: off[0m
+INFO: umu-launcher version 1.4.0 (3.12.3 (main, Mar 23 2026, 19:04:32) [GCC 13.3.0])
+INFO: steamrt3 is up to date
+INFO: Running 'UMU-Proton-10.0-4' using runtime 'sniper'
+INFO: Running 'steamrt3' using runtime 'host'
+ProtonFixes[3345] INFO: Running protonfixes on "UMU-Proton-10.0-4", build at 2026-03-30 07:33:47+00:00.
+ProtonFixes[3345] INFO: Running checks
+ProtonFixes[3345] INFO: All checks successful
+ProtonFixes[3345] WARN: Game title not found in CSV
+ProtonFixes[3345] INFO: Non-steam game UNKNOWN (umu-default)
+ProtonFixes[3345] INFO: No store specified, using UMU database
+ProtonFixes[3345] INFO: Using early stage global defaults for UNKNOWN (umu-default)
+ProtonFixes[3345] INFO: Non-steam game UNKNOWN (umu-default)
+ProtonFixes[3345] INFO: No store specified, using UMU database
+ProtonFixes[3345] INFO: No early stage global protonfix found for UNKNOWN (umu-default)
+ProtonFixes[3345] INFO: Running protonfixes on "UMU-Proton-10.0-4", build at 2026-03-30 07:33:47+00:00.
+ProtonFixes[3345] INFO: Running checks
+ProtonFixes[3345] INFO: All checks successful
+ProtonFixes[3345] INFO: Non-steam game UNKNOWN (umu-default)
+ProtonFixes[3345] INFO: No store specified, using UMU database
+ProtonFixes[3345] INFO: Using main stage global defaults for UNKNOWN (umu-default)
+ProtonFixes[3345] INFO: Non-steam game UNKNOWN (umu-default)
+ProtonFixes[3345] INFO: No store specified, using UMU database
+ProtonFixes[3345] INFO: No main stage global protonfix found for UNKNOWN (umu-default)
+Proton: /home/user/graphics-benchmark/workloads/gravitymark/dx/GravityMark-win/GravityMark/bin/GravityMark.exe
+Proton: Executable a unix path, launching with /unix option.
+
+Starting program with command-launcher service.
+
+To run commands in the per-app container, use a command like:
+
+/home/user/.local/share/umu/steamrt3/pressure-vessel/bin/steam-runtime-launch-client \
+	--bus-name=:1.106 \
+	-- \
+	bash
+
+fsync: up and running.

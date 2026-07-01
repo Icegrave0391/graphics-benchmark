@@ -1,0 +1,44 @@
+{
+  "run_id": "20260701T055610Z_native-linux_gravitymark_vulkan_1280x720",
+  "status": "ok",
+  "exit_code": 0,
+  "env": {
+    "env_id": "native-linux",
+    "category": "native",
+    "host_os": "Linux 6.17.0-35-generic x86_64 GNU/Linux",
+    "guest_os": null,
+    "virt": null,
+    "context_type": "native",
+    "transport": "native",
+    "guest_ssh_port": null
+  },
+  "workload": {
+    "tool": "gravitymark",
+    "api": "vulkan",
+    "backend": "vulkan",
+    "scene": "asteroids",
+    "asteroids": 200000,
+    "resolution": "1280x720",
+    "vsync": false,
+    "count": 1
+  },
+  "metrics": {
+    "score": 3346,
+    "fps_avg": 87.751405,
+    "fps_min": 1.336339,
+    "fps_max": 1000.000000,
+    "fps_1pct_low": null,
+    "fps_0p1pct_low": null,
+    "frametime_avg_ms": 11.395829,
+    "frametime_p95_ms": null,
+    "frametime_p99_ms": null,
+    "frametime_stddev_ms": null,
+    "frame_count": 3347,
+    "host_cpu_pct": null
+  },
+  "derived": { "baseline_id": "native-linux", "overhead_pct": null },
+  "capture_layer": "gravitymark-times",
+  "raw_capture": "times.txt",
+  "raw_stdout": "stdout.log",
+  "remote_raw_capture": null
+}

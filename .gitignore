@@ -2,8 +2,8 @@
 .DS_Store
 
 # Benchmark outputs
-/results/*
-!/results/.gitkeep
+#/results/*
+#!/results/.gitkeep
 captures/
 
 # Workload tool downloads + extracted/installed payloads (large, non-redistributable)

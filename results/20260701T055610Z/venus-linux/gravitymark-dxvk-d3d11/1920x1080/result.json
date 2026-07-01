@@ -1,0 +1,44 @@
+{
+  "run_id": "20260701T055610Z_venus-linux_gravitymark_d3d11-dxvk_1920x1080",
+  "status": "ok",
+  "exit_code": 0,
+  "env": {
+    "env_id": "venus-linux",
+    "category": "virtualization",
+    "host_os": "Linux 6.17.0-35-generic x86_64 GNU/Linux",
+    "guest_os": null,
+    "virt": "virtio-gpu",
+    "context_type": "venus",
+    "transport": "venus",
+    "guest_ssh_port": 2224
+  },
+  "workload": {
+    "tool": "gravitymark",
+    "api": "directx",
+    "backend": "d3d11-dxvk",
+    "scene": "asteroids",
+    "asteroids": 200000,
+    "resolution": "1920x1080",
+    "vsync": false,
+    "count": 1
+  },
+  "metrics": {
+    "score": null,
+    "fps_avg": 35.758759,
+    "fps_min": 6.125199,
+    "fps_max": 1000.000000,
+    "fps_1pct_low": null,
+    "fps_0p1pct_low": null,
+    "frametime_avg_ms": 27.965176,
+    "frametime_p95_ms": null,
+    "frametime_p99_ms": null,
+    "frametime_stddev_ms": null,
+    "frame_count": 1089,
+    "host_cpu_pct": null
+  },
+  "derived": { "baseline_id": "native-linux", "overhead_pct": null },
+  "capture_layer": "gravitymark-times",
+  "raw_capture": "times.txt",
+  "raw_stdout": "stdout.log",
+  "remote_raw_capture": "/tmp/graphics-benchmark-results/20260701T055610Z/venus-dxvk-d3d11/1920x1080/times.txt"
+}

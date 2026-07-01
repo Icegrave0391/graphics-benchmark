@@ -1,0 +1,15 @@
+{
+  "run_tag": "20260701T055610Z",
+  "started_utc": "2026-07-01T05:56:11Z",
+  "resolutions": "1280x720 1920x1080",
+  "guest": {
+    "host": "localhost",
+    "port": 2224,
+    "user": "user",
+    "repo": "/home/user/graphics-benchmark",
+    "display": ":0"
+  },
+  "workload": "gravitymark",
+  "asteroids": 200000,
+  "count": 1
+}
